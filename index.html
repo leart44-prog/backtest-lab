@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Backtest Lab — Standalone</title>
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.2/ace.js"></script>
+<style>
+:root {
+    --bg: #0b0e14;
+    --bg2: #111520;
+    --bg3: #1a1f2e;
+    --bg4: #222838;
+    --border: #2a3040;
+    --border-light: #353d50;
+    --text: #e8eaed;
+    --text2: #8890a4;
+    --text3: #5a6278;
+    --accent: #6366f1;
+    --accent2: #818cf8;
+    --accent-glow: rgba(99,102,241,0.15);
+    --green: #10b981;
+    --green-bg: rgba(16,185,129,0.1);
+    --red: #ef4444;
+    --red-bg: rgba(239,68,68,0.1);
+    --yellow: #f59e0b;
+    --yellow-bg: rgba(245,158,11,0.1);
+    --blue: #3b82f6;
+    --blue-bg: rgba(59,130,246,0.1);
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.3);
+    --transition: all 0.2s ease;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: var(--bg); color: var(--text); font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.5; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-light); }
+
+/* Layout */
+.app { display: grid; grid-template-columns: 320px 1fr; height: 100vh; }
+.sidebar { background: var(--bg2); border-right: 1px solid var(--border); overflow-y: auto; padding: 20px; display: flex; flex-direction: column; }
+.main { overflow-y: auto; padding: 28px; background: var(--bg); }
+
+/* Sidebar Header */
+.sidebar-header { margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+.logo { font-size: 22px; font-weight: 800; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -0.5px; }
+.subtitle { font-size: 11px; color: var(--text3); margin-top: 2px; letter-spacing: 0.5px; }
+
+/* Sections */
+.section { margin-bottom: 18px; }
+.section-title { font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text3); margin-bottom: 8px; font-weight: 700; }
+.section-collapse { cursor: pointer; display: flex; align-items: center; justify-content: space-between; user-select: none; }
+.section-collapse .arrow { font-size: 10px; color: var(--text3); transition: var(--transition); }
+.section-collapse.collapsed .arrow { transform: rotate(-90deg); }
+.section-body.hidden { display: none; }
+
+/* Form Elements */
+label { display: block; font-size: 12px; color: var(--text2); margin-bottom: 4px; font-weight: 500; }
+select, input[type="number"], input[type="text"] {
+    width: 100%; padding: 8px 12px; background: var(--bg3); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); color: var(--text); font-size: 13px; margin-bottom: 8px;
+    transition: var(--transition); outline: none;
+}
+select:focus, input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+select { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%238890a4' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px; }
+
+/* Buttons */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 16px; border: none; border-radius: var(--radius-sm); cursor: pointer; font-size: 13px; font-weight: 600; transition: var(--transition); }
+.btn-primary { background: linear-gradient(135deg, var(--accent), #4f46e5); color: #fff; width: 100%; }
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(99,102,241,0.3); }
+.btn-primary:active { transform: translateY(0); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+.btn-secondary { background: var(--bg3); color: var(--text); border: 1px solid var(--border); padding: 6px 12px; font-size: 12px; }
+.btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+.btn-secondary.active { background: var(--accent-glow); border-color: var(--accent); color: var(--accent); }
+.btn-group { display: flex; gap: 4px; margin-bottom: 8px; flex-wrap: wrap; }
+
+/* Pair Grid */
+.pair-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; max-height: 260px; overflow-y: auto; margin-bottom: 8px; }
+.pair-chip { padding: 5px 4px; background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; text-align: center; font-size: 10px; font-weight: 600; cursor: pointer; transition: var(--transition); user-select: none; color: var(--text2); }
+.pair-chip.selected { background: var(--accent-glow); border-color: var(--accent); color: var(--accent); }
+.pair-chip:hover { border-color: var(--border-light); }
+
+/* Strategy panels */
+.strategy-panel { display: none; }
+.strategy-panel.active { display: block; }
+
+/* Slider rows */
+.slider-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.slider-row label { flex: 1; margin: 0; font-size: 11px; }
+.slider-row input { width: 60px; margin: 0; text-align: center; padding: 4px; }
+
+/* Ace editor */
+.editor-wrap { border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; margin-bottom: 8px; }
+#pine-editor { width: 100%; height: 200px; }
+
+/* Pine templates */
+.pine-templates { margin-bottom: 8px; }
+
+/* Main Content Tabs */
+.main-tabs { display: flex; gap: 4px; margin-bottom: 24px; border-bottom: 1px solid var(--border); padding-bottom: 0; }
+.main-tab { padding: 10px 18px; font-size: 13px; font-weight: 600; cursor: pointer; color: var(--text2); border: none; background: none; border-bottom: 2px solid transparent; transition: var(--transition); margin-bottom: -1px; }
+.main-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.main-tab:hover:not(.active) { color: var(--text); }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* Year Filter */
+.year-filter { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding: 12px 16px; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); }
+.year-filter label { margin: 0; font-weight: 600; color: var(--text); font-size: 13px; white-space: nowrap; }
+.year-filter select { width: auto; margin: 0; min-width: 140px; }
+.year-filter .year-info { margin-left: auto; font-size: 12px; color: var(--text2); }
+
+/* KPI Grid */
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin-bottom: 24px; }
+.kpi-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; transition: var(--transition); position: relative; overflow: hidden; }
+.kpi-card:hover { border-color: var(--border-light); transform: translateY(-2px); box-shadow: var(--shadow); }
+.kpi-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; border-radius: var(--radius) var(--radius) 0 0; }
+.kpi-card.positive::before { background: var(--green); }
+.kpi-card.negative::before { background: var(--red); }
+.kpi-card.neutral::before { background: var(--accent); }
+.kpi-card.warning::before { background: var(--yellow); }
+.kpi-label { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-bottom: 6px; }
+.kpi-value { font-size: 26px; font-weight: 800; letter-spacing: -1px; font-variant-numeric: tabular-nums; }
+.kpi-sub { font-size: 11px; color: var(--text3); margin-top: 4px; }
+.kpi-value.green { color: var(--green); }
+.kpi-value.red { color: var(--red); }
+.kpi-value.yellow { color: var(--yellow); }
+
+/* Charts */
+.chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+.chart-box { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+.chart-box.full-width { grid-column: 1 / -1; }
+.chart-title { font-size: 13px; font-weight: 700; margin-bottom: 12px; color: var(--text); }
+
+/* Tables */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+th { padding: 10px 12px; text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text3); font-weight: 700; border-bottom: 1px solid var(--border); background: var(--bg2); position: sticky; top: 0; cursor: pointer; }
+th:hover { color: var(--text2); }
+td { padding: 8px 12px; border-bottom: 1px solid var(--border); font-variant-numeric: tabular-nums; }
+tr:hover td { background: var(--bg3); }
+.cell-green { color: var(--green); }
+.cell-red { color: var(--red); }
+
+/* Status / Loading */
+.status-bar { padding: 8px 12px; font-size: 12px; color: var(--text2); text-align: center; }
+.loading { display: none; align-items: center; justify-content: center; gap: 8px; padding: 40px; color: var(--text2); }
+.loading.active { display: flex; }
+.spinner { width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.6s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Empty State */
+.empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 80px 40px; color: var(--text3); text-align: center; }
+.empty-state .icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
+.empty-state .title { font-size: 18px; font-weight: 700; color: var(--text2); margin-bottom: 8px; }
+.empty-state .desc { font-size: 13px; max-width: 400px; }
+
+/* Pagination */
+.pagination { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 16px; }
+.pagination .btn { padding: 6px 12px; font-size: 12px; }
+.pagination .page-info { font-size: 12px; color: var(--text2); }
+
+/* Pine preview */
+.pine-preview { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px; font-family: monospace; font-size: 11px; max-height: 300px; overflow: auto; display: none; white-space: pre-wrap; color: var(--text2); margin-bottom: 8px; }
+.pine-preview.active { display: block; }
+.error-msg { padding: 12px; background: var(--red-bg); border: 1px solid rgba(239,68,68,0.3); border-radius: var(--radius-sm); color: var(--red); font-size: 12px; margin-bottom: 8px; display: none; }
+.error-msg.active { display: block; }
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .kpi-grid { grid-template-columns: repeat(3, 1fr); }
+    .chart-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 900px) {
+    .app { grid-template-columns: 1fr; }
+    .sidebar { max-height: 50vh; }
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+</head>
+<body>
+<div class="app">
+<!-- ═══════════ SIDEBAR ═══════════ -->
+<div class="sidebar">
+<div class="sidebar-header">
+    <div class="logo">Backtest Lab</div>
+    <div class="subtitle">Standalone Edition</div>
+</div>
+
+<!-- Strategy Selection -->
+<div class="section">
+    <div class="section-title">Strategy</div>
+    <select id="strategy-type" onchange="onStrategyTypeChange()" style="margin-bottom:12px">
+        <option value="playbook_v5">Playbook v5 — Pattern Zones</option>
+        <option value="pine">Pine Script (Custom)</option>
+    </select>
+
+    <!-- Playbook v5 Panel -->
+    <div id="panel-playbook" class="strategy-panel active">
+        <div style="padding:10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px;font-size:11px;color:var(--text2);line-height:1.6">
+            <strong style="color:var(--accent)">S&D Pattern Zones</strong><br>
+            DBR / RBR / DBD / RBD<br>
+            Trend: EMA 50/200 · Freshness ≤1 Touch<br>
+            Level on Level · Zone Scoring
+        </div>
+        <div class="section-collapse" onclick="toggleSection(this)">
+            <div class="section-title" style="margin:0;font-size:9px">Playbook Parameter</div>
+            <span class="arrow" style="font-size:9px">▼</span>
+        </div>
+        <div class="section-body hidden">
+            <div class="slider-row"><label>Leg-out (×ATR)</label><input type="number" id="pb_exp_mult" value="1.8" step="0.1" min="0.5" max="4" style="width:55px"></div>
+            <div class="slider-row"><label>Leg-in (×ATR)</label><input type="number" id="pb_legin_mult" value="1.0" step="0.1" min="0.3" max="3" style="width:55px"></div>
+            <div class="slider-row"><label>Imbalance (%)</label><input type="number" id="pb_imbalance" value="65" step="5" min="30" max="90" style="width:55px"></div>
+            <div class="slider-row"><label>Max Base Bars</label><input type="number" id="pb_max_base" value="6" step="1" min="1" max="10" style="width:55px"></div>
+            <div class="slider-row"><label>Trend Strength</label><input type="number" id="pb_trend" value="0.5" step="0.1" min="0" max="2" style="width:55px"></div>
+            <div class="slider-row"><label>SL Behind (%)</label><input type="number" id="pb_sl_pct" value="33" step="5" min="10" max="100" style="width:55px"></div>
+            <div class="slider-row"><label>Max Age (bars)</label><input type="number" id="pb_max_age" value="120" step="10" min="20" max="500" style="width:55px"></div>
+            <div class="slider-row"><label>Max Touches</label><input type="number" id="pb_max_touches" value="1" step="1" min="0" max="5" style="width:55px"></div>
+            <div class="slider-row"><label>Overlap (×ATR)</label><input type="number" id="pb_overlap" value="1.5" step="0.1" min="0.5" max="5" style="width:55px"></div>
+        </div>
+    </div>
+
+    <!-- Pine Script Panel -->
+    <div id="panel-pine" class="strategy-panel">
+        <div class="pine-templates">
+            <label>Template</label>
+            <select id="pine-template" onchange="loadPineTemplate()">
+                <option value="">-- Vorlage wählen --</option>
+                <option value="sma_cross">SMA Crossover</option>
+                <option value="rsi_mean">RSI Mean Reversion</option>
+                <option value="macd">MACD Signal</option>
+                <option value="bb_bounce">Bollinger Band Bounce</option>
+                <option value="ema_cross">EMA Cross (9/21)</option>
+                <option value="stoch_rsi">Stochastic + RSI</option>
+            </select>
+        </div>
+        <div class="editor-wrap"><div id="pine-editor"></div></div>
+        <div class="error-msg" id="pine-error"></div>
+        <button class="btn btn-secondary" onclick="togglePinePreview()" style="margin-bottom:8px;width:100%">Preview Generated Code</button>
+        <div class="pine-preview" id="pine-preview"></div>
+    </div>
+</div>
+
+<!-- Pair Selection (visible immediately) -->
+<div class="section">
+    <div class="section-title">Instruments</div>
+    <div class="btn-group">
+        <button class="btn btn-secondary" onclick="selectPairs('all')">Alle</button>
+        <button class="btn btn-secondary" onclick="selectPairs('none')">Keine</button>
+    </div>
+    <div class="pair-grid" id="pair-grid"></div>
+</div>
+
+<button class="btn btn-primary" id="run-btn" onclick="runBacktest()">
+    Backtest starten
+</button>
+
+<!-- Trade Management (collapsed by default) -->
+<div class="section">
+    <div class="section-collapse collapsed" onclick="toggleSection(this)">
+        <div class="section-title" style="margin:0">Trade Management</div>
+        <span class="arrow">▼</span>
+    </div>
+    <div class="section-body hidden">
+        <div class="slider-row"><label>TP1 (R : %)</label><input type="number" id="tp1r" value="1.0" step="0.5" min="0.5" max="5" style="width:50px"><input type="number" id="tp1p" value="50" step="5" min="0" max="100" style="width:50px"></div>
+        <div class="slider-row"><label>TP2 (R : %)</label><input type="number" id="tp2r" value="2.0" step="0.5" min="0.5" max="10" style="width:50px"><input type="number" id="tp2p" value="30" step="5" min="0" max="100" style="width:50px"></div>
+        <div class="slider-row"><label>TP3 (R : %)</label><input type="number" id="tp3r" value="3.0" step="0.5" min="0.5" max="15" style="width:50px"><input type="number" id="tp3p" value="20" step="5" min="0" max="100" style="width:50px"></div>
+        <div class="slider-row"><label>BE After TP</label><input type="number" id="be_tp" value="1" step="1" min="1" max="3"></div>
+        <div class="slider-row"><label>BE Buffer (xR)</label><input type="number" id="be_buf" value="0.1" step="0.05" min="0" max="1"></div>
+        <div class="slider-row"><label>Trail After TP</label><input type="number" id="trail_tp" value="2" step="1" min="1" max="3"></div>
+        <div class="slider-row"><label>Trail Dist (ATR)</label><input type="number" id="trail_dist" value="1.0" step="0.1" min="0.3" max="3"></div>
+        <div class="slider-row"><label>Max Bars</label><input type="number" id="max_bars" value="80" step="5" min="10" max="300"></div>
+        <div class="slider-row"><label>Spread (pips)</label><input type="number" id="spread" value="2.0" step="0.5" min="0" max="10"></div>
+        <div class="slider-row"><label>Slippage (pips)</label><input type="number" id="slippage" value="0.5" step="0.1" min="0" max="5"></div>
+    </div>
+</div>
+</div>
+
+<!-- ═══════════ MAIN CONTENT ═══════════ -->
+<div class="main">
+    <!-- State: Empty -->
+    <div id="empty-state" class="empty-state">
+        <div class="icon">📊</div>
+        <div class="title">Kein Backtest geladen</div>
+        <div class="desc">Wähle eine Strategie und Instrumente in der Sidebar, dann klicke "Backtest starten".</div>
+    </div>
+
+    <!-- State: Loading -->
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <span>Backtest wird berechnet...</span>
+    </div>
+
+    <!-- State: Results -->
+    <div id="results" style="display:none">
+
+        <!-- Progress Bar -->
+        <div id="progress-bar" style="display:none; margin-bottom: 16px;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                <span id="progress-text" style="font-size:12px; color:var(--text2);">Berechne...</span>
+            </div>
+            <div style="height:4px; background:var(--bg3); border-radius:2px; overflow:hidden;">
+                <div id="progress-fill" style="height:100%; background:var(--accent); width:0%; transition:width 0.3s;"></div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="main-tabs">
+            <button class="main-tab active" onclick="showTab('overview')">Dashboard</button>
+            <button class="main-tab" onclick="showTab('charts')">Charts</button>
+            <button class="main-tab" onclick="showTab('pairs')">Per-Pair</button>
+            <button class="main-tab" onclick="showTab('trades')">Trade Log</button>
+        </div>
+
+        <!-- ── OVERVIEW / DASHBOARD ── -->
+        <div id="tab-overview" class="tab-content active">
+            <div class="year-filter">
+                <label>Zeitraum:</label>
+                <select id="year-select" onchange="onYearChange()">
+                    <option value="all">Alle Jahre</option>
+                </select>
+                <div class="year-info" id="year-info"></div>
+            </div>
+
+            <div class="kpi-grid" id="kpi-grid"></div>
+
+            <div class="chart-grid">
+                <div class="chart-box full-width"><div class="chart-title">Equity Curve (Cumulative R)</div><div id="chart-equity" style="height:300px"></div></div>
+                <div class="chart-box full-width"><div class="chart-title">Drawdown</div><div id="chart-dd" style="height:200px"></div></div>
+            </div>
+        </div>
+
+        <!-- ── CHARTS ── -->
+        <div id="tab-charts" class="tab-content">
+            <div class="chart-grid">
+                <div class="chart-box full-width"><div class="chart-title">Monthly Heatmap (R-Multiple)</div><div id="chart-heatmap" style="height:350px"></div></div>
+                <div class="chart-box"><div class="chart-title">Yearly Performance</div><div id="chart-yearly" style="height:300px"></div></div>
+                <div class="chart-box"><div class="chart-title">Exit Reasons</div><div id="chart-exits" style="height:300px"></div></div>
+                <div class="chart-box"><div class="chart-title">Pattern Performance</div><div id="chart-patterns" style="height:300px"></div></div>
+                <div class="chart-box"><div class="chart-title">Long vs Short</div><div id="chart-direction" style="height:300px"></div></div>
+            </div>
+        </div>
+
+        <!-- ── PER PAIR ── -->
+        <div id="tab-pairs" class="tab-content">
+            <div class="chart-box" style="margin-bottom:16px"><div class="chart-title">Pair Ranking (Total R)</div><div id="chart-pair-rank" style="height:400px"></div></div>
+            <div class="chart-box">
+                <div class="chart-title">Pair Details</div>
+                <div class="table-wrap"><table id="pair-table"><thead><tr><th onclick="sortPairTable('pair')">Pair</th><th onclick="sortPairTable('trades')">Trades</th><th onclick="sortPairTable('wins')">Wins</th><th onclick="sortPairTable('wr')">Win Rate</th><th onclick="sortPairTable('total_r')">Total R</th><th onclick="sortPairTable('avg_r')">Avg R</th></tr></thead><tbody></tbody></table></div>
+            </div>
+        </div>
+
+        <!-- ── TRADE LOG ── -->
+        <div id="tab-trades" class="tab-content">
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+                <select id="trade-year-filter" onchange="filterTrades()" style="width:auto;margin:0"><option value="all">Alle Jahre</option></select>
+                <select id="trade-pair-filter" onchange="filterTrades()" style="width:auto;margin:0"><option value="all">Alle Paare</option></select>
+                <select id="trade-dir-filter" onchange="filterTrades()" style="width:auto;margin:0"><option value="all">Alle Richtungen</option><option value="1">Long</option><option value="-1">Short</option></select>
+                <div style="margin-left:auto;font-size:12px;color:var(--text2)" id="trade-count"></div>
+            </div>
+            <div class="chart-box">
+                <div class="table-wrap"><table id="trade-table"><thead><tr><th>Pair</th><th>Dir</th><th>Entry</th><th>Exit</th><th>Entry Time</th><th>Exit Time</th><th>PnL (R)</th><th>Exit Reason</th><th>Bars</th></tr></thead><tbody></tbody></table></div>
+                <div class="pagination" id="trade-pagination"></div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<script>
+// ═══════════ STATE ═══════════
+let selectedPairs = new Set();
+let allPairs = { forex: [] };
+let lastResult = null;
+let acePine = null;
+let pairSortCol = 'total_r';
+let pairSortAsc = false;
+let tradePage = 0;
+const TRADES_PER_PAGE = 50;
+let filteredTrades = [];
+let worker = null;
+
+// ═══════════ PINE TEMPLATES ═══════════
+const PINE_TEMPLATES = {
+    sma_cross: `//@version=5
+strategy("SMA Crossover", overlay=true)
+
+fastMA = ta.sma(close, 20)
+slowMA = ta.sma(close, 50)
+
+if (ta.crossover(fastMA, slowMA))
+    strategy.entry("Long", strategy.long)
+
+if (ta.crossunder(fastMA, slowMA))
+    strategy.entry("Short", strategy.short)`,
+
+    rsi_mean: `//@version=5
+strategy("RSI Mean Reversion", overlay=false)
+
+rsiVal = ta.rsi(close, 14)
+
+if (rsiVal < 30)
+    strategy.entry("Long", strategy.long)
+
+if (rsiVal > 70)
+    strategy.entry("Short", strategy.short)`,
+
+    macd: `//@version=5
+strategy("MACD Signal", overlay=false)
+
+fastLen = 12
+slowLen = 26
+sigLen = 9
+
+[macdLine, signalLine, hist] = ta.macd(close, fastLen, slowLen, sigLen)
+
+if (ta.crossover(macdLine, signalLine))
+    strategy.entry("Long", strategy.long)
+
+if (ta.crossunder(macdLine, signalLine))
+    strategy.entry("Short", strategy.short)`,
+
+    bb_bounce: `//@version=5
+strategy("Bollinger Band Bounce", overlay=true)
+
+length = 20
+mult = 2.0
+
+[middle, upper, lower] = ta.bb(close, length, mult)
+
+if (close < lower)
+    strategy.entry("Long", strategy.long)
+
+if (close > upper)
+    strategy.entry("Short", strategy.short)`,
+
+    ema_cross: `//@version=5
+strategy("EMA Cross 9/21", overlay=true)
+
+emaFast = ta.ema(close, 9)
+emaSlow = ta.ema(close, 21)
+
+if (ta.crossover(emaFast, emaSlow))
+    strategy.entry("Long", strategy.long)
+
+if (ta.crossunder(emaFast, emaSlow))
+    strategy.entry("Short", strategy.short)`,
+
+    stoch_rsi: `//@version=5
+strategy("Stochastic + RSI", overlay=false)
+
+rsiVal = ta.rsi(close, 14)
+stochVal = ta.stoch(close, high, low, 14)
+
+if (rsiVal < 35 and stochVal < 20)
+    strategy.entry("Long", strategy.long)
+
+if (rsiVal > 65 and stochVal > 80)
+    strategy.entry("Short", strategy.short)`
+};
+
+// ═══════════ INIT ═══════════
+document.addEventListener('DOMContentLoaded', () => {
+    initEditors();
+    initApp();
+});
+
+function initEditors() {
+    acePine = ace.edit('pine-editor');
+    acePine.setTheme('ace/theme/tomorrow_night');
+    acePine.session.setMode('ace/mode/text');
+    acePine.setOptions({ fontSize: 12, showGutter: true, showPrintMargin: false });
+    acePine.setValue(PINE_TEMPLATES.sma_cross, -1);
+}
+
+async function initApp() {
+    try {
+        const resp = await fetch('data/pairs.json');
+        const pairs = await resp.json();
+        const grid = document.getElementById('pair-grid');
+
+        // All pairs
+        const fxPairs = pairs.map(p => p.name);
+        fxPairs.forEach(name => {
+            const chip = document.createElement('div');
+            chip.className = 'pair-chip';
+            chip.textContent = name;
+            chip.dataset.pair = name;
+            chip.onclick = () => togglePair(name, chip);
+            grid.appendChild(chip);
+        });
+
+        allPairs = { forex: fxPairs };
+    } catch (e) {
+        console.error('Failed to load pairs.json:', e);
+    }
+}
+
+function togglePair(name, chip) {
+    chip.classList.toggle('selected');
+    if (selectedPairs.has(name)) selectedPairs.delete(name);
+    else selectedPairs.add(name);
+}
+
+// ═══════════ STRATEGY TYPE SWITCH ═══════════
+function onStrategyTypeChange() {
+    const type = document.getElementById('strategy-type').value;
+    document.getElementById('panel-playbook').classList.toggle('active', type === 'playbook_v5');
+    document.getElementById('panel-pine').classList.toggle('active', type === 'pine');
+}
+
+function getPlaybookParams() {
+    return {
+        exp_mult: parseFloat(document.getElementById('pb_exp_mult').value) || 1.8,
+        legin_mult: parseFloat(document.getElementById('pb_legin_mult').value) || 1.0,
+        imbalance_ratio: (parseFloat(document.getElementById('pb_imbalance').value) || 65) / 100,
+        max_base_4h: parseInt(document.getElementById('pb_max_base').value) || 6,
+        trend_strength: parseFloat(document.getElementById('pb_trend').value) || 0.5,
+        sl_pct: parseFloat(document.getElementById('pb_sl_pct').value) || 33,
+        max_age: parseInt(document.getElementById('pb_max_age').value) || 120,
+        max_entry_touches: parseInt(document.getElementById('pb_max_touches').value) || 1,
+        overlap_atr: parseFloat(document.getElementById('pb_overlap').value) || 1.5,
+    };
+}
+
+// ═══════════ SIDEBAR CONTROLS ═══════════
+function toggleSection(el) {
+    el.classList.toggle('collapsed');
+    el.nextElementSibling.classList.toggle('hidden');
+}
+
+function selectPairs(group) {
+    document.querySelectorAll('.pair-chip').forEach(chip => {
+        const name = chip.dataset.pair;
+        let sel = false;
+        if (group === 'all') sel = true;
+        else if (group === 'none') sel = false;
+        chip.classList.toggle('selected', sel);
+        if (sel) selectedPairs.add(name);
+        else selectedPairs.delete(name);
+    });
+}
+
+function loadPineTemplate() {
+    const key = document.getElementById('pine-template').value;
+    if (key && PINE_TEMPLATES[key] && acePine) {
+        acePine.setValue(PINE_TEMPLATES[key], -1);
+    }
+}
+
+function togglePinePreview() {
+    const pre = document.getElementById('pine-preview');
+    if (pre.classList.contains('active')) {
+        pre.classList.remove('active');
+        return;
+    }
+    pre.textContent = 'Pine Script wird beim Starten des Backtests im Web Worker konvertiert und ausgefuehrt.';
+    pre.classList.add('active');
+}
+
+// ═══════════ BACKTEST ═══════════
+function pf(id) { return parseFloat(document.getElementById(id).value) || 0; }
+function pi(id) { return parseInt(document.getElementById(id).value) || 0; }
+
+async function runBacktest() {
+    const stratType = document.getElementById('strategy-type').value;
+    const isPine = stratType === 'pine';
+
+    if (isPine) {
+        const pineCode = acePine.getValue();
+        if (!pineCode.trim()) { alert('Bitte Pine Script eingeben'); return; }
+    }
+    if (selectedPairs.size === 0) { alert('Bitte mindestens ein Instrument wählen'); return; }
+
+    // Show loading
+    const btn = document.getElementById('run-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner"></div> Berechne...';
+    document.getElementById('empty-state').style.display = 'none';
+    document.getElementById('results').style.display = 'block';
+    document.getElementById('progress-bar').style.display = 'block';
+
+    // Build trade config from form
+    const tc = {
+        tp_levels: [
+            [parseFloat(document.getElementById('tp1r').value), parseFloat(document.getElementById('tp1p').value)/100],
+            [parseFloat(document.getElementById('tp2r').value), parseFloat(document.getElementById('tp2p').value)/100],
+            [parseFloat(document.getElementById('tp3r').value), parseFloat(document.getElementById('tp3p').value)/100],
+        ],
+        be_after_tp: parseInt(document.getElementById('be_tp').value),
+        be_buffer_atr: parseFloat(document.getElementById('be_buf').value),
+        trail_after_tp: parseInt(document.getElementById('trail_tp').value),
+        trail_distance_atr: parseFloat(document.getElementById('trail_dist').value),
+        max_bars: parseInt(document.getElementById('max_bars').value),
+        spread_pips: parseFloat(document.getElementById('spread').value),
+        slippage_pips: parseFloat(document.getElementById('slippage').value),
+    };
+
+    // Terminate previous worker
+    if (worker) worker.terminate();
+
+    // Create new worker (cache-bust to avoid stale files)
+    worker = new Worker('js/worker.js?v=' + Date.now());
+
+    worker.onmessage = function(e) {
+        const msg = e.data;
+        if (msg.type === 'progress') {
+            document.getElementById('progress-text').textContent =
+                `Berechne ${msg.pair} (${msg.index + 1}/${msg.total})...`;
+            document.getElementById('progress-fill').style.width =
+                ((msg.index + 1) / msg.total * 100) + '%';
+        } else if (msg.type === 'result') {
+            document.getElementById('progress-bar').style.display = 'none';
+            btn.disabled = false;
+            btn.innerHTML = 'Backtest starten';
+            lastResult = msg.data;
+            renderResults(msg.data);
+        } else if (msg.type === 'error') {
+            document.getElementById('progress-bar').style.display = 'none';
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('empty-state').style.display = 'flex';
+            btn.disabled = false;
+            btn.innerHTML = 'Backtest starten';
+            alert('Fehler: ' + msg.error);
+        }
+    };
+
+    worker.onerror = function(e) {
+        document.getElementById('progress-bar').style.display = 'none';
+        document.getElementById('results').style.display = 'none';
+        document.getElementById('empty-state').style.display = 'flex';
+        btn.disabled = false;
+        btn.innerHTML = 'Backtest starten';
+        alert('Worker Error: ' + e.message);
+    };
+
+    // Set the correct base URL for data files (worker runs from js/ so relative paths break)
+    const baseUrl = new URL('data', window.location.href).href;
+    worker.postMessage({ type: 'setBaseUrl', url: baseUrl });
+
+    // Build message depending on strategy type
+    const msg = {
+        type: 'run',
+        pairs: [...selectedPairs],
+        tradeConfig: tc,
+        strategyType: stratType,
+    };
+
+    if (isPine) {
+        msg.pineCode = acePine.getValue();
+    } else if (stratType === 'playbook_v5') {
+        msg.strategyParams = getPlaybookParams();
+    }
+
+    worker.postMessage(msg);
+}
+
+// ═══════════ RENDER RESULTS ═══════════
+function renderResults(data) {
+    // Populate year selector
+    const sel = document.getElementById('year-select');
+    sel.innerHTML = '<option value="all">Alle Jahre</option>';
+    if (data.yearly) {
+        Object.keys(data.yearly).sort().forEach(yr => {
+            sel.innerHTML += `<option value="${yr}">${yr}</option>`;
+        });
+    }
+
+    // Populate trade filters
+    const tySel = document.getElementById('trade-year-filter');
+    tySel.innerHTML = '<option value="all">Alle Jahre</option>';
+    Object.keys(data.yearly || {}).sort().forEach(yr => { tySel.innerHTML += `<option value="${yr}">${yr}</option>`; });
+
+    const tpSel = document.getElementById('trade-pair-filter');
+    tpSel.innerHTML = '<option value="all">Alle Paare</option>';
+    Object.keys(data.pairs || {}).sort().forEach(p => { tpSel.innerHTML += `<option value="${p}">${p}</option>`; });
+
+    renderDashboard(data.summary, data);
+    renderCharts(data);
+    renderPairTable(data.pairs);
+    filteredTrades = data.trades || [];
+    tradePage = 0;
+    renderTradeTable();
+}
+
+// ═══════════ YEAR FILTER ═══════════
+function onYearChange() {
+    if (!lastResult) return;
+    const yr = document.getElementById('year-select').value;
+    if (yr === 'all') {
+        renderDashboard(lastResult.summary, lastResult);
+    } else {
+        const yfull = (lastResult.yearly_full || {})[yr];
+        if (yfull) {
+            renderDashboard(yfull.summary || yfull, { cum_r_curve: yfull.cum_r_curve, dd_series: yfull.dd_series, equity_curve: yfull.equity_curve });
+        }
+    }
+}
+
+// ═══════════ KPI DASHBOARD ═══════════
+function renderDashboard(s, chartData) {
+    const info = document.getElementById('year-info');
+    info.textContent = `${s.total_trades} Trades | ${s.wins} Wins | ${s.losses} Losses`;
+
+    const kpis = [
+        { label: 'Total Trades', value: s.total_trades, cls: 'neutral' },
+        { label: 'Win Rate', value: s.win_rate + '%', cls: s.win_rate >= 50 ? 'positive' : 'negative', vcls: s.win_rate >= 50 ? 'green' : 'red' },
+        { label: 'Profit Factor', value: s.profit_factor, cls: s.profit_factor >= 1.5 ? 'positive' : s.profit_factor >= 1 ? 'warning' : 'negative', vcls: s.profit_factor >= 1.5 ? 'green' : s.profit_factor >= 1 ? 'yellow' : 'red' },
+        { label: 'Total R', value: s.total_r > 0 ? '+' + s.total_r : s.total_r, cls: s.total_r >= 0 ? 'positive' : 'negative', vcls: s.total_r >= 0 ? 'green' : 'red' },
+        { label: 'Sharpe Ratio', value: s.sharpe, cls: s.sharpe >= 1 ? 'positive' : s.sharpe >= 0 ? 'warning' : 'negative', vcls: s.sharpe >= 1 ? 'green' : s.sharpe >= 0 ? 'yellow' : 'red' },
+        { label: 'Sortino Ratio', value: s.sortino, cls: s.sortino >= 1.5 ? 'positive' : 'neutral', vcls: s.sortino >= 1.5 ? 'green' : '' },
+        { label: 'Calmar Ratio', value: s.calmar, cls: 'neutral' },
+        { label: 'Max Drawdown', value: s.max_dd_pct + '%', cls: 'negative', vcls: 'red', sub: s.max_dd_r + 'R' },
+        { label: 'Expectancy', value: s.expectancy + 'R', cls: s.expectancy >= 0 ? 'positive' : 'negative', vcls: s.expectancy >= 0 ? 'green' : 'red' },
+        { label: 'Avg R', value: s.avg_r, cls: s.avg_r >= 0 ? 'positive' : 'negative', vcls: s.avg_r >= 0 ? 'green' : 'red' },
+        { label: 'Avg Win', value: '+' + s.avg_win_r + 'R', cls: 'positive', vcls: 'green' },
+        { label: 'Avg Loss', value: s.avg_loss_r + 'R', cls: 'negative', vcls: 'red' },
+        { label: 'Max Win Streak', value: s.max_win_streak, cls: 'positive' },
+        { label: 'Max Loss Streak', value: s.max_loss_streak, cls: 'negative' },
+        { label: 'Avg Bars Held', value: s.avg_bars_held, cls: 'neutral' },
+        { label: 'Long / Short', value: `${s.long_trades} / ${s.short_trades}`, cls: 'neutral', sub: `${s.long_r > 0 ? '+' : ''}${s.long_r}R / ${s.short_r > 0 ? '+' : ''}${s.short_r}R` },
+    ];
+
+    const grid = document.getElementById('kpi-grid');
+    grid.innerHTML = kpis.map(k => `
+        <div class="kpi-card ${k.cls}">
+            <div class="kpi-label">${k.label}</div>
+            <div class="kpi-value ${k.vcls || ''}">${k.value}</div>
+            ${k.sub ? `<div class="kpi-sub">${k.sub}</div>` : ''}
+        </div>
+    `).join('');
+
+    // Equity curve
+    const cumR = chartData.cum_r_curve || [];
+    if (cumR.length > 0) {
+        Plotly.newPlot('chart-equity', [{
+            y: cumR, type: 'scatter', mode: 'lines',
+            line: { color: '#6366f1', width: 2 },
+            fill: 'tozeroy', fillcolor: 'rgba(99,102,241,0.08)',
+        }], plotLayout({ yaxis: { title: 'Cumulative R', gridcolor: '#1e2433' } }), plotConfig());
+    }
+
+    // Drawdown
+    const dd = chartData.dd_series || [];
+    if (dd.length > 0) {
+        Plotly.newPlot('chart-dd', [{
+            y: dd, type: 'scatter', mode: 'lines',
+            line: { color: '#ef4444', width: 1.5 },
+            fill: 'tozeroy', fillcolor: 'rgba(239,68,68,0.08)',
+        }], plotLayout({ yaxis: { title: 'Drawdown %', gridcolor: '#1e2433' } }), plotConfig());
+    }
+}
+
+// ═══════════ CHARTS ═══════════
+function renderCharts(data) {
+    // Monthly heatmap
+    const hm = data.heatmap || {};
+    const years = Object.keys(hm).sort();
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const z = years.map(yr => months.map((_, mi) => (hm[yr] || {})[mi + 1] || 0));
+
+    if (years.length > 0) {
+        Plotly.newPlot('chart-heatmap', [{
+            z: z, x: months, y: years, type: 'heatmap',
+            colorscale: [[0, '#ef4444'], [0.5, '#1a1f2e'], [1, '#10b981']],
+            zmid: 0, hoverongaps: false,
+            hovertemplate: '%{y} %{x}: %{z:.1f}R<extra></extra>',
+        }], plotLayout({ yaxis: { autorange: 'reversed' } }), plotConfig());
+    }
+
+    // Yearly performance
+    const yd = data.yearly || {};
+    const yKeys = Object.keys(yd).sort();
+    if (yKeys.length > 0) {
+        Plotly.newPlot('chart-yearly', [{
+            x: yKeys, y: yKeys.map(k => yd[k].total_r), type: 'bar',
+            marker: { color: yKeys.map(k => yd[k].total_r >= 0 ? '#10b981' : '#ef4444'), borderRadius: 4 },
+            hovertemplate: '%{x}: %{y:.1f}R<extra></extra>',
+        }], plotLayout(), plotConfig());
+    }
+
+    // Exit reasons
+    const ed = data.exit_distribution || {};
+    const eKeys = Object.keys(ed);
+    if (eKeys.length > 0) {
+        const colors = { SL: '#ef4444', TP3: '#10b981', TRAIL_SL: '#f59e0b', BE_SL: '#3b82f6', TIMEOUT: '#8b5cf6' };
+        Plotly.newPlot('chart-exits', [{
+            labels: eKeys, values: eKeys.map(k => ed[k]), type: 'pie',
+            marker: { colors: eKeys.map(k => colors[k] || '#6366f1') },
+            textinfo: 'label+percent', textfont: { color: '#fff', size: 11 },
+            hole: 0.4,
+        }], plotLayout({ showlegend: false }), plotConfig());
+    }
+
+    // Pattern performance
+    const pd = data.pattern_distribution || {};
+    const pKeys = Object.keys(pd).sort();
+    if (pKeys.length > 0) {
+        Plotly.newPlot('chart-patterns', [{
+            x: pKeys, y: pKeys.map(k => pd[k].total_r), type: 'bar',
+            marker: { color: pKeys.map(k => pd[k].total_r >= 0 ? '#10b981' : '#ef4444') },
+            text: pKeys.map(k => pd[k].trades + ' trades'),
+            hovertemplate: '%{x}: %{y:.1f}R (%{text})<extra></extra>',
+        }], plotLayout(), plotConfig());
+    }
+
+    // Long vs Short
+    const s = data.summary || {};
+    if (s.long_trades || s.short_trades) {
+        Plotly.newPlot('chart-direction', [{
+            x: ['Long', 'Short'], y: [s.long_r, s.short_r], type: 'bar',
+            marker: { color: ['#3b82f6', '#f59e0b'] },
+            text: [`${s.long_trades} trades`, `${s.short_trades} trades`],
+            hovertemplate: '%{x}: %{y:.1f}R (%{text})<extra></extra>',
+        }], plotLayout(), plotConfig());
+    }
+}
+
+// ═══════════ PAIR TABLE ═══════════
+function renderPairTable(pairs) {
+    if (!pairs) return;
+    const keys = Object.keys(pairs).sort((a, b) => {
+        const va = pairs[a][pairSortCol], vb = pairs[b][pairSortCol];
+        return pairSortAsc ? (va > vb ? 1 : -1) : (va < vb ? 1 : -1);
+    });
+    const tbody = document.querySelector('#pair-table tbody');
+    tbody.innerHTML = keys.map(k => {
+        const p = pairs[k];
+        return `<tr><td>${k}</td><td>${p.trades}</td><td>${p.wins}</td><td>${p.wr}%</td><td class="${p.total_r >= 0 ? 'cell-green' : 'cell-red'}">${p.total_r > 0 ? '+' : ''}${p.total_r}</td><td class="${p.avg_r >= 0 ? 'cell-green' : 'cell-red'}">${p.avg_r}</td></tr>`;
+    }).join('');
+
+    // Pair ranking chart
+    if (keys.length > 0) {
+        const sorted = keys.sort((a, b) => pairs[a].total_r - pairs[b].total_r);
+        Plotly.newPlot('chart-pair-rank', [{
+            y: sorted, x: sorted.map(k => pairs[k].total_r), type: 'bar', orientation: 'h',
+            marker: { color: sorted.map(k => pairs[k].total_r >= 0 ? '#10b981' : '#ef4444') },
+            hovertemplate: '%{y}: %{x:.1f}R<extra></extra>',
+        }], plotLayout({ margin: { l: 120 }, height: Math.max(300, sorted.length * 25) }), plotConfig());
+    }
+}
+
+function sortPairTable(col) {
+    if (pairSortCol === col) pairSortAsc = !pairSortAsc;
+    else { pairSortCol = col; pairSortAsc = false; }
+    if (lastResult) renderPairTable(lastResult.pairs);
+}
+
+// ═══════════ TRADE LOG ═══════════
+function filterTrades() {
+    if (!lastResult) return;
+    const yr = document.getElementById('trade-year-filter').value;
+    const pair = document.getElementById('trade-pair-filter').value;
+    const dir = document.getElementById('trade-dir-filter').value;
+    filteredTrades = (lastResult.trades || []).filter(t => {
+        if (yr !== 'all' && !t.entry_time.startsWith(yr)) return false;
+        if (pair !== 'all' && t.pair !== pair) return false;
+        if (dir !== 'all' && t.direction != dir) return false;
+        return true;
+    });
+    tradePage = 0;
+    renderTradeTable();
+}
+
+function renderTradeTable() {
+    const tbody = document.querySelector('#trade-table tbody');
+    const start = tradePage * TRADES_PER_PAGE;
+    const page = filteredTrades.slice(start, start + TRADES_PER_PAGE);
+
+    document.getElementById('trade-count').textContent = `${filteredTrades.length} Trades`;
+
+    tbody.innerHTML = page.map(t => {
+        const dir = t.direction === 1 ? '<span style="color:#3b82f6">LONG</span>' : '<span style="color:#f59e0b">SHORT</span>';
+        const pnlCls = t.pnl_r >= 0 ? 'cell-green' : 'cell-red';
+        return `<tr><td>${t.pair}</td><td>${dir}</td><td>${(t.entry||0).toFixed(5)}</td><td>${(t.exit||0).toFixed(5)}</td><td>${(t.entry_time||'').slice(0,16)}</td><td>${(t.exit_time||'').slice(0,16)}</td><td class="${pnlCls}">${t.pnl_r > 0 ? '+' : ''}${t.pnl_r.toFixed(2)}</td><td>${t.exit_reason||''}</td><td>${t.bars_held||''}</td></tr>`;
+    }).join('');
+
+    // Pagination
+    const totalPages = Math.ceil(filteredTrades.length / TRADES_PER_PAGE);
+    const pag = document.getElementById('trade-pagination');
+    if (totalPages <= 1) { pag.innerHTML = ''; return; }
+    pag.innerHTML = `
+        <button class="btn btn-secondary" onclick="tradePage=Math.max(0,tradePage-1);renderTradeTable()" ${tradePage===0?'disabled':''}>&#9664;</button>
+        <span class="page-info">${tradePage+1} / ${totalPages}</span>
+        <button class="btn btn-secondary" onclick="tradePage=Math.min(${totalPages-1},tradePage+1);renderTradeTable()" ${tradePage>=totalPages-1?'disabled':''}>&#9654;</button>
+    `;
+}
+
+// ═══════════ TABS ═══════════
+function showTab(name) {
+    document.querySelectorAll('.main-tab').forEach(t => t.classList.toggle('active', t.textContent.toLowerCase().includes(name) || (name === 'overview' && t.textContent === 'Dashboard')));
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.toggle('active', t.id === 'tab-' + name));
+    // Trigger resize for Plotly charts
+    setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
+}
+
+// ═══════════ PLOTLY HELPERS ═══════════
+function plotLayout(extra = {}) {
+    return Object.assign({
+        paper_bgcolor: 'transparent', plot_bgcolor: 'transparent',
+        font: { color: '#8890a4', size: 11 },
+        margin: { l: 50, r: 20, t: 10, b: 40 },
+        xaxis: { gridcolor: '#1e2433', zerolinecolor: '#2a3040' },
+        yaxis: { gridcolor: '#1e2433', zerolinecolor: '#2a3040' },
+        showlegend: false,
+    }, extra);
+}
+function plotConfig() { return { displayModeBar: false, responsive: true }; }
+</script>
+</body>
+</html>

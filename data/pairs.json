@@ -1,0 +1,254 @@
+[
+  {
+    "name": "AUDCAD",
+    "bars": 20460,
+    "from": 1357077600,
+    "to": 1772215200,
+    "type": "forex",
+    "jpy": false,
+    "size": 265712
+  },
+  {
+    "name": "AUDCHF",
+    "bars": 20460,
+    "from": 1357077600,
+    "to": 1772215200,
+    "type": "forex",
+    "jpy": false,
+    "size": 265291
+  },
+  {
+    "name": "AUDJPY",
+    "bars": 20460,
+    "from": 1357077600,
+    "to": 1772215200,
+    "type": "forex",
+    "jpy": true,
+    "size": 273514
+  },
+  {
+    "name": "AUDNZD",
+    "bars": 20462,
+    "from": 1357077600,
+    "to": 1772215200,
+    "type": "forex",
+    "jpy": false,
+    "size": 266124
+  },
+  {
+    "name": "AUDUSD",
+    "bars": 20460,
+    "from": 1357077600,
+    "to": 1772215200,
+    "type": "forex",
+    "jpy": false,
+    "size": 267513
+  },
+  {
+    "name": "CADCHF",
+    "bars": 20460,
+    "from": 1357077600,
+    "to": 1772215200,
+    "type": "forex",
+    "jpy": false,
+    "size": 262042
+  },
+  {
+    "name": "CADJPY",
+    "bars": 20460,
+    "from": 1357077600,
+    "to": 1772215200,
+    "type": "forex",
+    "jpy": true,
+    "size": 273183
+  },
+  {
+    "name": "CHFJPY",
+    "bars": 20460,
+    "from": 1357077600,
+    "to": 1772215200,
+    "type": "forex",
+    "jpy": true,
+    "size": 277856
+  },
+  {
+    "name": "EURAUD",
+    "bars": 20460,
+    "from": 1357077600,
+    "to": 1772215200,
+    "type": "forex",
+    "jpy": false,
+    "size": 279743
+  },
+  {
+    "name": "EURCAD",
+    "bars": 20460,
+    "from": 1357077600,
+    "to": 1772215200,
+    "type": "forex",
+    "jpy": false,
+    "size": 275204
+  },
+  {
+    "name": "EURCHF",
+    "bars": 20460,
+    "from": 1357077600,
+    "to": 1772215200,
+    "type": "forex",
+    "jpy": false,
+    "size": 258986
+  },
+  {
+    "name": "EURGBP",
+    "bars": 20460,
+    "from": 1357077600,
+    "to": 1772215200,
+    "type": "forex",
+    "jpy": false,
+    "size": 261180
+  },
+  {
+    "name": "EURJPY",
+    "bars": 20460,
+    "from": 1357077600,
+    "to": 1772215200,
+    "type": "forex",
+    "jpy": true,
+    "size": 280194
+  },
+  {
+    "name": "EURNZD",
+    "bars": 20462,
+    "from": 1357077600,
+    "to": 1772215200,
+    "type": "forex",
+    "jpy": false,
+    "size": 281807
+  },
+  {
+    "name": "EURUSD",
+    "bars": 20460,
+    "from": 1357077600,
+    "to": 1772215200,
+    "type": "forex",
+    "jpy": false,
+    "size": 272003
+  },
+  {
+    "name": "GBPAUD",
+    "bars": 20460,
+    "from": 1357077600,
+    "to": 1772215200,
+    "type": "forex",
+    "jpy": false,
+    "size": 285114
+  },
+  {
+    "name": "GBPCAD",
+    "bars": 20460,
+    "from": 1357077600,
+    "to": 1772215200,
+    "type": "forex",
+    "jpy": false,
+    "size": 276852
+  },
+  {
+    "name": "GBPCHF",
+    "bars": 20460,
+    "from": 1357077600,
+    "to": 1772215200,
+    "type": "forex",
+    "jpy": false,
+    "size": 274234
+  },
+  {
+    "name": "GBPJPY",
+    "bars": 20460,
+    "from": 1357077600,
+    "to": 1772215200,
+    "type": "forex",
+    "jpy": true,
+    "size": 287190
+  },
+  {
+    "name": "GBPNZD",
+    "bars": 20462,
+    "from": 1357077600,
+    "to": 1772215200,
+    "type": "forex",
+    "jpy": false,
+    "size": 285071
+  },
+  {
+    "name": "GBPUSD",
+    "bars": 20460,
+    "from": 1357077600,
+    "to": 1772215200,
+    "type": "forex",
+    "jpy": false,
+    "size": 278457
+  },
+  {
+    "name": "NZDCAD",
+    "bars": 20462,
+    "from": 1357077600,
+    "to": 1772215200,
+    "type": "forex",
+    "jpy": false,
+    "size": 268469
+  },
+  {
+    "name": "NZDCHF",
+    "bars": 20462,
+    "from": 1357077600,
+    "to": 1772215200,
+    "type": "forex",
+    "jpy": false,
+    "size": 264256
+  },
+  {
+    "name": "NZDJPY",
+    "bars": 20462,
+    "from": 1357077600,
+    "to": 1772215200,
+    "type": "forex",
+    "jpy": true,
+    "size": 272080
+  },
+  {
+    "name": "NZDUSD",
+    "bars": 20462,
+    "from": 1357077600,
+    "to": 1772215200,
+    "type": "forex",
+    "jpy": false,
+    "size": 264891
+  },
+  {
+    "name": "USDCAD",
+    "bars": 20460,
+    "from": 1357077600,
+    "to": 1772215200,
+    "type": "forex",
+    "jpy": false,
+    "size": 271292
+  },
+  {
+    "name": "USDCHF",
+    "bars": 20460,
+    "from": 1357077600,
+    "to": 1772215200,
+    "type": "forex",
+    "jpy": false,
+    "size": 267369
+  },
+  {
+    "name": "USDJPY",
+    "bars": 20460,
+    "from": 1357077600,
+    "to": 1772215200,
+    "type": "forex",
+    "jpy": true,
+    "size": 277787
+  }
+]
