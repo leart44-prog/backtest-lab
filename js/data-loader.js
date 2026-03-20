@@ -88,10 +88,22 @@
   // ---------------------------------------------------------------------------
 
   const JPY_PAIRS = new Set([
-    'USDJPY', 'EURJPY', 'GBPJPY', 'AUDJPY', 'NZDJPY', 'CADJPY', 'CHFJPY'
+    'USDJPY', 'EURJPY', 'GBPJPY', 'AUDJPY', 'NZDJPY', 'CADJPY', 'CHFJPY', '6J'
   ]);
 
+  // Futures tick sizes (1 "pip" = 1 tick for futures)
+  const FUTURES_TICK = {
+    ES: 0.25, NQ: 0.25, YM: 1, RTY: 0.1, NKD: 5, DAX: 0.5,
+    CL: 0.01, NG: 0.001, GC: 0.1, SI: 0.005, HG: 0.0005,
+    PA: 0.05, PL: 0.1,
+    ZC: 0.25, ZS: 0.25, ZW: 0.25, ZO: 0.25,
+    CC: 1, CT: 0.01, OJ: 0.05, SB: 0.01, KC: 0.05,
+    '6A': 0.0001, '6B': 0.0001, '6C': 0.0001, '6E': 0.0001,
+    '6J': 0.000001, '6N': 0.0001, '6S': 0.0001,
+  };
+
   function getPipValue(pair) {
+    if (FUTURES_TICK[pair] !== undefined) return FUTURES_TICK[pair];
     return JPY_PAIRS.has(pair) ? 0.01 : 0.0001;
   }
 

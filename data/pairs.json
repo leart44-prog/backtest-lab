@@ -5,8 +5,9 @@
     "from": 1357077600,
     "to": 1772215200,
     "type": "forex",
-    "jpy": false,
-    "size": 265712
+    "category": "forex",
+    "size": 265712,
+    "jpy": false
   },
   {
     "name": "AUDCHF",
@@ -14,8 +15,9 @@
     "from": 1357077600,
     "to": 1772215200,
     "type": "forex",
-    "jpy": false,
-    "size": 265291
+    "category": "forex",
+    "size": 265291,
+    "jpy": false
   },
   {
     "name": "AUDJPY",
@@ -23,8 +25,9 @@
     "from": 1357077600,
     "to": 1772215200,
     "type": "forex",
-    "jpy": true,
-    "size": 273514
+    "category": "forex",
+    "size": 269766,
+    "jpy": true
   },
   {
     "name": "AUDNZD",
@@ -32,8 +35,9 @@
     "from": 1357077600,
     "to": 1772215200,
     "type": "forex",
-    "jpy": false,
-    "size": 266124
+    "category": "forex",
+    "size": 266124,
+    "jpy": false
   },
   {
     "name": "AUDUSD",
@@ -41,8 +45,9 @@
     "from": 1357077600,
     "to": 1772215200,
     "type": "forex",
-    "jpy": false,
-    "size": 267513
+    "category": "forex",
+    "size": 267513,
+    "jpy": false
   },
   {
     "name": "CADCHF",
@@ -50,8 +55,9 @@
     "from": 1357077600,
     "to": 1772215200,
     "type": "forex",
-    "jpy": false,
-    "size": 262042
+    "category": "forex",
+    "size": 262042,
+    "jpy": false
   },
   {
     "name": "CADJPY",
@@ -59,8 +65,9 @@
     "from": 1357077600,
     "to": 1772215200,
     "type": "forex",
-    "jpy": true,
-    "size": 273183
+    "category": "forex",
+    "size": 258568,
+    "jpy": true
   },
   {
     "name": "CHFJPY",
@@ -68,8 +75,9 @@
     "from": 1357077600,
     "to": 1772215200,
     "type": "forex",
-    "jpy": true,
-    "size": 277856
+    "category": "forex",
+    "size": 223191,
+    "jpy": true
   },
   {
     "name": "EURAUD",
@@ -77,8 +85,9 @@
     "from": 1357077600,
     "to": 1772215200,
     "type": "forex",
-    "jpy": false,
-    "size": 279743
+    "category": "forex",
+    "size": 279743,
+    "jpy": false
   },
   {
     "name": "EURCAD",
@@ -86,8 +95,9 @@
     "from": 1357077600,
     "to": 1772215200,
     "type": "forex",
-    "jpy": false,
-    "size": 275204
+    "category": "forex",
+    "size": 275204,
+    "jpy": false
   },
   {
     "name": "EURCHF",
@@ -95,8 +105,9 @@
     "from": 1357077600,
     "to": 1772215200,
     "type": "forex",
-    "jpy": false,
-    "size": 258986
+    "category": "forex",
+    "size": 258986,
+    "jpy": false
   },
   {
     "name": "EURGBP",
@@ -104,8 +115,9 @@
     "from": 1357077600,
     "to": 1772215200,
     "type": "forex",
-    "jpy": false,
-    "size": 261180
+    "category": "forex",
+    "size": 261180,
+    "jpy": false
   },
   {
     "name": "EURJPY",
@@ -113,8 +125,9 @@
     "from": 1357077600,
     "to": 1772215200,
     "type": "forex",
-    "jpy": true,
-    "size": 280194
+    "category": "forex",
+    "size": 225362,
+    "jpy": true
   },
   {
     "name": "EURNZD",
@@ -122,8 +135,9 @@
     "from": 1357077600,
     "to": 1772215200,
     "type": "forex",
-    "jpy": false,
-    "size": 281807
+    "category": "forex",
+    "size": 281807,
+    "jpy": false
   },
   {
     "name": "EURUSD",
@@ -131,8 +145,9 @@
     "from": 1357077600,
     "to": 1772215200,
     "type": "forex",
-    "jpy": false,
-    "size": 272003
+    "category": "forex",
+    "size": 272003,
+    "jpy": false
   },
   {
     "name": "GBPAUD",
@@ -140,8 +155,9 @@
     "from": 1357077600,
     "to": 1772215200,
     "type": "forex",
-    "jpy": false,
-    "size": 285114
+    "category": "forex",
+    "size": 285114,
+    "jpy": false
   },
   {
     "name": "GBPCAD",
@@ -149,8 +165,9 @@
     "from": 1357077600,
     "to": 1772215200,
     "type": "forex",
-    "jpy": false,
-    "size": 276852
+    "category": "forex",
+    "size": 276852,
+    "jpy": false
   },
   {
     "name": "GBPCHF",
@@ -158,8 +175,9 @@
     "from": 1357077600,
     "to": 1772215200,
     "type": "forex",
-    "jpy": false,
-    "size": 274234
+    "category": "forex",
+    "size": 274234,
+    "jpy": false
   },
   {
     "name": "GBPJPY",
@@ -167,8 +185,9 @@
     "from": 1357077600,
     "to": 1772215200,
     "type": "forex",
-    "jpy": true,
-    "size": 287190
+    "category": "forex",
+    "size": 234009,
+    "jpy": true
   },
   {
     "name": "GBPNZD",
@@ -176,8 +195,9 @@
     "from": 1357077600,
     "to": 1772215200,
     "type": "forex",
-    "jpy": false,
-    "size": 285071
+    "category": "forex",
+    "size": 285071,
+    "jpy": false
   },
   {
     "name": "GBPUSD",
@@ -185,8 +205,9 @@
     "from": 1357077600,
     "to": 1772215200,
     "type": "forex",
-    "jpy": false,
-    "size": 278457
+    "category": "forex",
+    "size": 278457,
+    "jpy": false
   },
   {
     "name": "NZDCAD",
@@ -194,8 +215,9 @@
     "from": 1357077600,
     "to": 1772215200,
     "type": "forex",
-    "jpy": false,
-    "size": 268469
+    "category": "forex",
+    "size": 268469,
+    "jpy": false
   },
   {
     "name": "NZDCHF",
@@ -203,8 +225,9 @@
     "from": 1357077600,
     "to": 1772215200,
     "type": "forex",
-    "jpy": false,
-    "size": 264256
+    "category": "forex",
+    "size": 264256,
+    "jpy": false
   },
   {
     "name": "NZDJPY",
@@ -212,8 +235,9 @@
     "from": 1357077600,
     "to": 1772215200,
     "type": "forex",
-    "jpy": true,
-    "size": 272080
+    "category": "forex",
+    "size": 272080,
+    "jpy": true
   },
   {
     "name": "NZDUSD",
@@ -221,8 +245,9 @@
     "from": 1357077600,
     "to": 1772215200,
     "type": "forex",
-    "jpy": false,
-    "size": 264891
+    "category": "forex",
+    "size": 264891,
+    "jpy": false
   },
   {
     "name": "USDCAD",
@@ -230,8 +255,9 @@
     "from": 1357077600,
     "to": 1772215200,
     "type": "forex",
-    "jpy": false,
-    "size": 271292
+    "category": "forex",
+    "size": 271292,
+    "jpy": false
   },
   {
     "name": "USDCHF",
@@ -239,8 +265,9 @@
     "from": 1357077600,
     "to": 1772215200,
     "type": "forex",
-    "jpy": false,
-    "size": 267369
+    "category": "forex",
+    "size": 267369,
+    "jpy": false
   },
   {
     "name": "USDJPY",
@@ -248,7 +275,279 @@
     "from": 1357077600,
     "to": 1772215200,
     "type": "forex",
+    "category": "forex",
+    "size": 225105,
+    "jpy": true
+  },
+  {
+    "name": "YM",
+    "bars": 20285,
+    "from": 1357124400,
+    "to": 1773136800,
+    "type": "futures",
+    "category": "index",
+    "size": 256687,
+    "tick": 1
+  },
+  {
+    "name": "ES",
+    "bars": 20293,
+    "from": 1357124400,
+    "to": 1773136800,
+    "type": "futures",
+    "category": "index",
+    "size": 239010,
+    "tick": 0.25
+  },
+  {
+    "name": "NQ",
+    "bars": 20293,
+    "from": 1357124400,
+    "to": 1773136800,
+    "type": "futures",
+    "category": "index",
+    "size": 271146,
+    "tick": 0.25
+  },
+  {
+    "name": "RTY",
+    "bars": 13346,
+    "from": 1499637600,
+    "to": 1773136800,
+    "type": "futures",
+    "category": "index",
+    "size": 168206,
+    "tick": 0.1
+  },
+  {
+    "name": "NKD",
+    "bars": 15387,
+    "from": 1457622000,
+    "to": 1773136800,
+    "type": "futures",
+    "category": "index",
+    "size": 170410,
+    "tick": 5
+  },
+  {
+    "name": "DAX",
+    "bars": 13840,
+    "from": 1457521200,
+    "to": 1773144000,
+    "type": "futures",
+    "category": "index",
+    "size": 170263,
+    "tick": 0.5
+  },
+  {
+    "name": "HG",
+    "bars": 15425,
+    "from": 1457593200,
+    "to": 1773136800,
+    "type": "futures",
+    "category": "commodity",
+    "size": 170384,
+    "tick": 0.0005
+  },
+  {
+    "name": "SI",
+    "bars": 15426,
+    "from": 1457521200,
+    "to": 1773136800,
+    "type": "futures",
+    "category": "commodity",
+    "size": 166531,
+    "tick": 0.005
+  },
+  {
+    "name": "CL",
+    "bars": 20333,
+    "from": 1357081200,
+    "to": 1773136800,
+    "type": "futures",
+    "category": "commodity",
+    "size": 235742,
+    "tick": 0.01
+  },
+  {
+    "name": "NG",
+    "bars": 15425,
+    "from": 1457593200,
+    "to": 1773136800,
+    "type": "futures",
+    "category": "commodity",
+    "size": 170904,
+    "tick": 0.001
+  },
+  {
+    "name": "PA",
+    "bars": 15310,
+    "from": 1457607600,
+    "to": 1773136800,
+    "type": "futures",
+    "category": "commodity",
+    "size": 181634,
+    "tick": 0.05
+  },
+  {
+    "name": "PL",
+    "bars": 15425,
+    "from": 1457593200,
+    "to": 1773136800,
+    "type": "futures",
+    "category": "commodity",
+    "size": 184903,
+    "tick": 0.1
+  },
+  {
+    "name": "ZC",
+    "bars": 12481,
+    "from": 1457614800,
+    "to": 1773144000,
+    "type": "futures",
+    "category": "agriculture",
+    "size": 121737,
+    "tick": 0.25
+  },
+  {
+    "name": "ZO",
+    "bars": 12030,
+    "from": 1457614800,
+    "to": 1773144000,
+    "type": "futures",
+    "category": "agriculture",
+    "size": 115673,
+    "tick": 0.25
+  },
+  {
+    "name": "ZS",
+    "bars": 12482,
+    "from": 1457600400,
+    "to": 1773144000,
+    "type": "futures",
+    "category": "agriculture",
+    "size": 136510,
+    "tick": 0.25
+  },
+  {
+    "name": "ZW",
+    "bars": 12482,
+    "from": 1457600400,
+    "to": 1773144000,
+    "type": "futures",
+    "category": "agriculture",
+    "size": 129823,
+    "tick": 0.25
+  },
+  {
+    "name": "CC",
+    "bars": 7375,
+    "from": 1457603100,
+    "to": 1773135900,
+    "type": "futures",
+    "category": "agriculture",
+    "size": 85593,
+    "tick": 1
+  },
+  {
+    "name": "CT",
+    "bars": 12993,
+    "from": 1457618400,
+    "to": 1773133200,
+    "type": "futures",
+    "category": "agriculture",
+    "size": 147443,
+    "tick": 0.01
+  },
+  {
+    "name": "OJ",
+    "bars": 5031,
+    "from": 1457614800,
+    "to": 1773144000,
+    "type": "futures",
+    "category": "agriculture",
+    "size": 59387,
+    "tick": 0.05
+  },
+  {
+    "name": "SB",
+    "bars": 7500,
+    "from": 1457627400,
+    "to": 1773131400,
+    "type": "futures",
+    "category": "agriculture",
+    "size": 76818,
+    "tick": 0.01
+  },
+  {
+    "name": "6A",
+    "bars": 15423,
+    "from": 1457593200,
+    "to": 1773136800,
+    "type": "futures",
+    "category": "fx_future",
+    "size": 163574,
+    "tick": 0.0001
+  },
+  {
+    "name": "6B",
+    "bars": 15428,
+    "from": 1457593200,
+    "to": 1773136800,
+    "type": "futures",
+    "category": "fx_future",
+    "size": 167299,
+    "tick": 0.0001
+  },
+  {
+    "name": "6C",
+    "bars": 15417,
+    "from": 1457607600,
+    "to": 1773136800,
+    "type": "futures",
+    "category": "fx_future",
+    "size": 162539,
+    "tick": 0.0001
+  },
+  {
+    "name": "6E",
+    "bars": 15428,
+    "from": 1457521200,
+    "to": 1773136800,
+    "type": "futures",
+    "category": "fx_future",
+    "size": 173646,
+    "tick": 0.0001
+  },
+  {
+    "name": "6J",
+    "bars": 15433,
+    "from": 1457521200,
+    "to": 1773136800,
+    "type": "futures",
+    "category": "fx_future",
+    "size": 161159,
     "jpy": true,
-    "size": 277787
+    "tick": 1e-06
+  },
+  {
+    "name": "6N",
+    "bars": 15411,
+    "from": 1457607600,
+    "to": 1773136800,
+    "type": "futures",
+    "category": "fx_future",
+    "size": 162335,
+    "tick": 0.0001
+  },
+  {
+    "name": "6S",
+    "bars": 15428,
+    "from": 1457593200,
+    "to": 1773136800,
+    "type": "futures",
+    "category": "fx_future",
+    "size": 164576,
+    "tick": 0.0001
   }
 ]

@@ -82,7 +82,7 @@ select { cursor: pointer; appearance: none; background-image: url("data:image/sv
 .btn-group { display: flex; gap: 4px; margin-bottom: 8px; flex-wrap: wrap; }
 
 /* Pair Grid */
-.pair-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; max-height: 260px; overflow-y: auto; margin-bottom: 8px; }
+.pair-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; max-height: 450px; overflow-y: auto; margin-bottom: 8px; }
 .pair-chip { padding: 5px 4px; background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; text-align: center; font-size: 10px; font-weight: 600; cursor: pointer; transition: var(--transition); user-select: none; color: var(--text2); }
 .pair-chip.selected { background: var(--accent-glow); border-color: var(--accent); color: var(--accent); }
 .pair-chip:hover { border-color: var(--border-light); }
@@ -486,18 +486,43 @@ async function initApp() {
         const pairs = await resp.json();
         const grid = document.getElementById('pair-grid');
 
-        // All pairs
-        const fxPairs = pairs.map(p => p.name);
-        fxPairs.forEach(name => {
-            const chip = document.createElement('div');
-            chip.className = 'pair-chip';
-            chip.textContent = name;
-            chip.dataset.pair = name;
-            chip.onclick = () => togglePair(name, chip);
-            grid.appendChild(chip);
+        // Group by category
+        const CATEGORY_LABELS = {
+            forex: 'Forex',
+            index: 'Indices',
+            commodity: 'Energies & Metals',
+            agriculture: 'Agriculture',
+            fx_future: 'FX Futures',
+        };
+        const groups = {};
+        pairs.forEach(p => {
+            const cat = p.category || p.type || 'other';
+            if (!groups[cat]) groups[cat] = [];
+            groups[cat].push(p.name);
         });
 
-        allPairs = { forex: fxPairs };
+        const allNames = [];
+        for (const [cat, names] of Object.entries(groups)) {
+            // Category header with select-all button
+            const header = document.createElement('div');
+            header.style.cssText = 'grid-column:1/-1;display:flex;align-items:center;gap:6px;margin-top:8px;margin-bottom:2px;';
+            header.innerHTML = `<span style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px">${CATEGORY_LABELS[cat] || cat}</span>
+                <button class="btn btn-secondary" style="padding:2px 8px;font-size:9px;margin-left:auto" onclick="selectCategory('${cat}')">Alle</button>`;
+            grid.appendChild(header);
+
+            names.forEach(name => {
+                const chip = document.createElement('div');
+                chip.className = 'pair-chip';
+                chip.textContent = name;
+                chip.dataset.pair = name;
+                chip.dataset.category = cat;
+                chip.onclick = () => togglePair(name, chip);
+                grid.appendChild(chip);
+                allNames.push(name);
+            });
+        }
+
+        allPairs = { all: allNames, ...groups };
     } catch (e) {
         console.error('Failed to load pairs.json:', e);
     }
@@ -539,9 +564,19 @@ function toggleSection(el) {
 function selectPairs(group) {
     document.querySelectorAll('.pair-chip').forEach(chip => {
         const name = chip.dataset.pair;
-        let sel = false;
-        if (group === 'all') sel = true;
-        else if (group === 'none') sel = false;
+        if (!name) return;
+        let sel = group === 'all';
+        chip.classList.toggle('selected', sel);
+        if (sel) selectedPairs.add(name);
+        else selectedPairs.delete(name);
+    });
+}
+
+function selectCategory(cat) {
+    document.querySelectorAll(`.pair-chip[data-category="${cat}"]`).forEach(chip => {
+        const name = chip.dataset.pair;
+        const allSelected = [...document.querySelectorAll(`.pair-chip[data-category="${cat}"]`)].every(c => c.classList.contains('selected'));
+        const sel = !allSelected;
         chip.classList.toggle('selected', sel);
         if (sel) selectedPairs.add(name);
         else selectedPairs.delete(name);
