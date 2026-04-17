@@ -1,22 +1,25 @@
 #!/usr/bin/env python3
 """Volume-profile swing framework for QQQ (Alpaca market data).
 
-Pulls hourly bars, builds monthly + weekly volume profiles (POC/VAH/VAL),
-classifies trend vs. balance from stacked POCs, and prints an actionable
-swing plan: bias, entry zone, stop, targets, key confluence levels.
+Subcommands:
+    analyze    Current-state swing plan from latest data (default)
+    backtest   Walk-forward simulation of the framework rules (reports R-metrics)
+    plot       Price + monthly/weekly volume profiles (PNG output)
 
 Usage:
-    pip install alpaca-py pandas numpy
+    pip install -r requirements-qqq.txt
     export ALPACA_API_KEY_ID=...
     export ALPACA_API_SECRET_KEY=...
-    python qqq_volume_analysis.py [--symbol QQQ] [--months 12] [--feed iex|sip]
+
+    python qqq_volume_analysis.py analyze  --symbol QQQ --months 12
+    python qqq_volume_analysis.py backtest --symbol QQQ --months 24
+    python qqq_volume_analysis.py plot     --symbol QQQ --months 12 --out qqq.png
 
 Notes:
-    - Free Alpaca accounts get IEX-only volume, which is a subset of total
-      tape. Profile SHAPE is still usable for swing work, but absolute
-      volume numbers are low. Use --feed sip if you have a paid plan.
-    - Profile is a TPO-style approximation: each bar's volume is spread
-      uniformly across its high-low range. Adequate for H1+ timeframes.
+    - Free Alpaca tier returns IEX-only volume. Shape of the profile is
+      still usable for swing work. Use --feed sip on paid plans.
+    - Profile is a TPO-style approximation: each bar's volume spread
+      uniformly across its H-L range. Adequate for H1+ timeframes.
 """
 import argparse
 import os
@@ -33,8 +36,10 @@ try:
     from alpaca.data.timeframe import TimeFrame
     from alpaca.data.enums import DataFeed
 except ImportError:
-    sys.exit("Install alpaca-py first:  pip install alpaca-py pandas numpy")
+    sys.exit("Install dependencies first:  pip install -r requirements-qqq.txt")
 
+
+# ───────────────────── core: profile + classification ─────────────────────
 
 @dataclass
 class Profile:
@@ -71,9 +76,8 @@ def fetch_hourly(symbol, months_back, client, feed):
 
 
 def build_profile(bars, bins=80, va_pct=0.70):
-    """Distribute each bar's volume uniformly across its H-L range, then
-    compute POC + value area by expanding outward from POC until va_pct
-    of total volume is covered."""
+    """Distribute each bar's volume uniformly across H-L, then expand the
+    value area outward from POC until va_pct of total volume is covered."""
     if bars.empty:
         return None
     lo, hi = bars["low"].min(), bars["high"].max()
@@ -107,7 +111,14 @@ def build_profile(bars, bins=80, va_pct=0.70):
         else:
             lo_i -= 1
             covered += dn
-    return float(centers[poc_i]), float(centers[hi_i]), float(centers[lo_i]), float(total)
+    return (
+        float(centers[poc_i]),
+        float(centers[hi_i]),
+        float(centers[lo_i]),
+        float(total),
+        centers,
+        vols,
+    )
 
 
 def period_profiles(bars, freq):
@@ -118,7 +129,7 @@ def period_profiles(bars, freq):
         res = build_profile(grp)
         if res is None:
             continue
-        poc, vah, val, tot = res
+        poc, vah, val, tot, _, _ = res
         label = ts.strftime("%Y-%m") if freq.startswith("M") else ts.strftime("%Y-W%V")
         out.append(Profile(
             label=label, start=grp.index[0], end=grp.index[-1],
@@ -142,15 +153,15 @@ def classify_trend(profiles, n=4):
     return "balance"
 
 
+# ───────────────────────────── analyze mode ─────────────────────────────
+
 def print_plan(symbol, monthly, weekly, price):
     bar = "=" * 64
     print(f"\n{bar}\n{symbol} — Volume-Profile Swing Framework\n{bar}")
     print(f"Current price: {price:.2f}\n")
-
     print("Monthly profiles (last 6):")
     for p in monthly[-6:]:
         print(f"  {p.label}  POC {p.poc:8.2f}  VAH {p.vah:8.2f}  VAL {p.val:8.2f}  close {p.close:8.2f}")
-
     print("\nWeekly profiles (last 8):")
     for p in weekly[-8:]:
         print(f"  {p.label}  POC {p.poc:8.2f}  VAH {p.vah:8.2f}  VAL {p.val:8.2f}  close {p.close:8.2f}")
@@ -162,9 +173,10 @@ def print_plan(symbol, monthly, weekly, price):
 
     if not monthly or not weekly:
         return
-
-    last_m, prev_m = monthly[-1], monthly[-2] if len(monthly) >= 2 else monthly[-1]
-    last_w, prev_w = weekly[-1], weekly[-2] if len(weekly) >= 2 else weekly[-1]
+    last_m = monthly[-1]
+    prev_m = monthly[-2] if len(monthly) >= 2 else last_m
+    last_w = weekly[-1]
+    prev_w = weekly[-2] if len(weekly) >= 2 else last_w
 
     print("\n--- Swing plan ---")
     if m_trend == "uptrend":
@@ -174,7 +186,7 @@ def print_plan(symbol, monthly, weekly, price):
         t1 = last_m.high
         t2 = last_m.high + (last_m.high - last_m.low)
         print(f"Bias: LONG  (monthly uptrend, weekly {w_trend})")
-        print(f"Entry zone: {min(entry_lo, entry_hi):.2f} – {max(entry_lo, entry_hi):.2f}  (monthly VAH + weekly POC confluence)")
+        print(f"Entry zone: {min(entry_lo, entry_hi):.2f} – {max(entry_lo, entry_hi):.2f}")
         print(f"Stop:       below {stop:.2f}")
         print(f"T1:         {t1:.2f}  (recent high / breakout retest)")
         print(f"T2:         {t2:.2f}  (range extension)")
@@ -185,7 +197,7 @@ def print_plan(symbol, monthly, weekly, price):
         t1 = last_m.low
         t2 = last_m.low - (last_m.high - last_m.low)
         print(f"Bias: SHORT  (monthly downtrend, weekly {w_trend})")
-        print(f"Entry zone: {min(entry_lo, entry_hi):.2f} – {max(entry_lo, entry_hi):.2f}  (monthly VAL + weekly POC confluence)")
+        print(f"Entry zone: {min(entry_lo, entry_hi):.2f} – {max(entry_lo, entry_hi):.2f}")
         print(f"Stop:       above {stop:.2f}")
         print(f"T1:         {t1:.2f}")
         print(f"T2:         {t2:.2f}")
@@ -204,28 +216,238 @@ def print_plan(symbol, monthly, weekly, price):
         print(f"  {lvl:8.2f}   ({(lvl - price) / price * 100:+.2f}%){tag}")
 
 
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--symbol", default="QQQ")
-    ap.add_argument("--months", type=int, default=12)
-    ap.add_argument("--feed", choices=["iex", "sip"], default="iex")
-    args = ap.parse_args()
+# ───────────────────────────── backtest mode ─────────────────────────────
 
+def run_backtest(bars, max_hold_days=28):
+    """Walk-forward: at each weekly open compute profiles using PAST data
+    only, generate one trade candidate per the framework, simulate fill
+    and exit within max_hold_days. No overlapping trades."""
+    trades = []
+    cooldown_until = None
+    week_starts = pd.date_range(
+        bars.index[0].normalize(), bars.index[-1].normalize(), freq="W-MON", tz=bars.index.tz,
+    )
+
+    for wk_start in week_starts:
+        if cooldown_until is not None and wk_start < cooldown_until:
+            continue
+        past = bars[bars.index < wk_start]
+        if len(past) < 30 * 24:
+            continue
+        monthly = period_profiles(past, "MS")
+        weekly = period_profiles(past, "W-MON")
+        if len(monthly) < 3 or len(weekly) < 4:
+            continue
+        trend = classify_trend(monthly, 4)
+        if trend not in ("uptrend", "downtrend"):
+            continue
+
+        last_m = monthly[-1]
+        prev_m = monthly[-2]
+        last_w = weekly[-1]
+        prev_w = weekly[-2]
+
+        if trend == "uptrend":
+            direction = 1
+            entry = last_m.vah
+            stop = min(last_w.val, prev_w.val)
+            t1 = max(last_m.high, prev_m.high)
+            t2 = t1 + (last_m.high - last_m.low)
+        else:
+            direction = -1
+            entry = last_m.val
+            stop = max(last_w.vah, prev_w.vah)
+            t1 = min(last_m.low, prev_m.low)
+            t2 = t1 - (last_m.high - last_m.low)
+
+        if direction * (t1 - entry) <= 0 or direction * (entry - stop) <= 0:
+            continue  # invalid geometry
+
+        window = bars[
+            (bars.index >= wk_start)
+            & (bars.index < wk_start + pd.Timedelta(days=max_hold_days))
+        ]
+        if window.empty:
+            continue
+
+        filled_ts = None
+        for ts, row in window.iterrows():
+            if row["low"] <= entry <= row["high"]:
+                filled_ts = ts
+                break
+        if filled_ts is None:
+            continue
+
+        remaining = window[window.index > filled_ts]
+        exit_ts, exit_px, reason = None, None, "timeout"
+        trailing_stop = stop
+        hit_t1 = False
+        for ts, row in remaining.iterrows():
+            if direction == 1:
+                if row["low"] <= trailing_stop:
+                    exit_ts, exit_px = ts, trailing_stop
+                    reason = "be" if hit_t1 else "stop"
+                    break
+                if not hit_t1 and row["high"] >= t1:
+                    hit_t1 = True
+                    trailing_stop = entry
+                if row["high"] >= t2:
+                    exit_ts, exit_px, reason = ts, t2, "target"
+                    break
+            else:
+                if row["high"] >= trailing_stop:
+                    exit_ts, exit_px = ts, trailing_stop
+                    reason = "be" if hit_t1 else "stop"
+                    break
+                if not hit_t1 and row["low"] <= t1:
+                    hit_t1 = True
+                    trailing_stop = entry
+                if row["low"] <= t2:
+                    exit_ts, exit_px, reason = ts, t2, "target"
+                    break
+        if exit_ts is None:
+            exit_ts = remaining.index[-1] if not remaining.empty else filled_ts
+            exit_px = float(window["close"].iloc[-1])
+
+        risk = abs(entry - stop)
+        pnl = direction * (exit_px - entry)
+        r = pnl / risk if risk > 0 else 0.0
+        trades.append({
+            "entry_time": filled_ts, "exit_time": exit_ts,
+            "dir": "L" if direction == 1 else "S",
+            "entry": round(entry, 2), "stop": round(stop, 2),
+            "t1": round(t1, 2), "t2": round(t2, 2),
+            "exit": round(exit_px, 2),
+            "reason": reason, "r": round(r, 2),
+        })
+        cooldown_until = exit_ts
+
+    return pd.DataFrame(trades)
+
+
+def print_backtest(df):
+    if df.empty:
+        print("\nNo trades generated.")
+        return
+    wins = df[df["r"] > 0]
+    losses = df[df["r"] <= 0]
+    equity = df["r"].cumsum()
+    dd = (equity - equity.cummax()).min()
+    print(f"\n--- Backtest results ({df['entry_time'].iloc[0].date()} → {df['exit_time'].iloc[-1].date()}) ---")
+    print(f"Trades:            {len(df)}  ({len(df[df['dir']=='L'])} long / {len(df[df['dir']=='S'])} short)")
+    print(f"Win rate:          {len(wins) / len(df) * 100:.1f}%")
+    print(f"Avg R:             {df['r'].mean():.2f}")
+    print(f"Total R:           {df['r'].sum():.1f}")
+    if len(wins) > 0 and len(losses) > 0:
+        pf = wins["r"].sum() / abs(losses["r"].sum())
+        print(f"Profit factor:     {pf:.2f}")
+    print(f"Max drawdown (R):  {dd:.2f}")
+    exit_counts = df["reason"].value_counts().to_dict()
+    print(f"Exit reasons:      {exit_counts}")
+    print("\nTrade log:")
+    cols = ["entry_time", "exit_time", "dir", "entry", "stop", "t1", "t2", "exit", "reason", "r"]
+    with pd.option_context("display.max_rows", None, "display.width", 160):
+        print(df[cols].to_string(index=False))
+
+
+# ─────────────────────────────── plot mode ───────────────────────────────
+
+def plot_profiles(bars, out_path, months=6, weeks=12):
+    import matplotlib.pyplot as plt
+    import matplotlib.dates as mdates
+
+    fig, axes = plt.subplots(2, 1, figsize=(15, 11))
+    _plot_panel(axes[0], bars, freq="MS", n_periods=months,
+                title=f"Monthly Volume Profiles (last {months} months)")
+    _plot_panel(axes[1], bars, freq="W-MON", n_periods=weeks,
+                title=f"Weekly Volume Profiles (last {weeks} weeks)")
+    for ax in axes:
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%b %d\n%Y"))
+        ax.grid(alpha=0.2)
+    plt.tight_layout()
+    plt.savefig(out_path, dpi=130)
+    print(f"Saved {out_path}")
+
+
+def _plot_panel(ax, bars, freq, n_periods, title):
+    import matplotlib.dates as mdates
+
+    profiles = period_profiles(bars, freq)[-n_periods:]
+    if not profiles:
+        return
+    cutoff = profiles[0].start
+    sub = bars[bars.index >= cutoff]
+    ax.plot(sub.index, sub["close"], color="#222", lw=0.8, zorder=3)
+    ax.set_title(title)
+    ax.set_ylabel("Price")
+
+    for p in profiles:
+        seg = bars[(bars.index >= p.start) & (bars.index <= p.end)]
+        if seg.empty:
+            continue
+        res = build_profile(seg, bins=50)
+        if res is None:
+            continue
+        _poc, _vah, _val, _tot, centers, vols = res
+        max_v = vols.max()
+        if max_v <= 0:
+            continue
+        span = mdates.date2num(p.end) - mdates.date2num(p.start)
+        bar_h = centers[1] - centers[0] if len(centers) > 1 else 1
+        widths = [span * 0.85 * (v / max_v) for v in vols]
+        left = mdates.date2num(p.start)
+        for c, w in zip(centers, widths):
+            if w <= 0:
+                continue
+            ax.barh(c, w, left=left, height=bar_h,
+                    color="#4a90e2", alpha=0.35, edgecolor="none", zorder=2)
+        ax.hlines(p.poc, p.start, p.end, color="#2e7d32", lw=1.4, zorder=4)
+        ax.hlines(p.vah, p.start, p.end, color="#1565c0", lw=1.0, ls="--", zorder=4)
+        ax.hlines(p.val, p.start, p.end, color="#c62828", lw=1.0, ls="--", zorder=4)
+
+
+# ─────────────────────────────── entrypoint ───────────────────────────────
+
+def _client_and_bars(args):
     key = os.getenv("ALPACA_API_KEY_ID")
     sec = os.getenv("ALPACA_API_SECRET_KEY")
     if not key or not sec:
         sys.exit("Set ALPACA_API_KEY_ID and ALPACA_API_SECRET_KEY env vars.")
-
     feed = DataFeed.SIP if args.feed == "sip" else DataFeed.IEX
     client = StockHistoricalDataClient(key, sec)
     bars = fetch_hourly(args.symbol, args.months, client, feed)
     print(f"Fetched {len(bars)} hourly bars for {args.symbol} "
           f"({bars.index[0].date()} – {bars.index[-1].date()}, feed={args.feed})")
+    return bars
 
-    monthly = period_profiles(bars, "MS")
-    weekly = period_profiles(bars, "W-MON")
-    price = float(bars["close"].iloc[-1])
-    print_plan(args.symbol, monthly, weekly, price)
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("mode", nargs="?", default="analyze",
+                    choices=["analyze", "backtest", "plot"])
+    ap.add_argument("--symbol", default="QQQ")
+    ap.add_argument("--months", type=int, default=12)
+    ap.add_argument("--feed", choices=["iex", "sip"], default="iex")
+    ap.add_argument("--out", default="qqq_profiles.png", help="plot output path")
+    ap.add_argument("--hold-days", type=int, default=28, help="backtest max hold")
+    args = ap.parse_args()
+
+    bars = _client_and_bars(args)
+
+    if args.mode == "analyze":
+        monthly = period_profiles(bars, "MS")
+        weekly = period_profiles(bars, "W-MON")
+        price = float(bars["close"].iloc[-1])
+        print_plan(args.symbol, monthly, weekly, price)
+    elif args.mode == "backtest":
+        df = run_backtest(bars, max_hold_days=args.hold_days)
+        print_backtest(df)
+        csv_out = args.out.replace(".png", ".csv") if args.out.endswith(".png") else args.out
+        if not df.empty:
+            df.to_csv(csv_out, index=False)
+            print(f"\nSaved trade log → {csv_out}")
+    else:
+        plot_profiles(bars, args.out)
 
 
 if __name__ == "__main__":
