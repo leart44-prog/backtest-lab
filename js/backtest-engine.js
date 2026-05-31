@@ -116,12 +116,19 @@
         }
 
         // --- Generate new signal ---
-        if (openTrade === null && !closedThisBar) {
+        // Optional entry window (unix seconds). When set, only open trades whose
+        // signal bar falls inside [start_time, end_time]; bars outside still warm
+        // up indicators and still manage/resolve an already-open trade.
+        const inWindow =
+          (this.config.start_time == null || bar.time >= this.config.start_time) &&
+          (this.config.end_time   == null || bar.time <= this.config.end_time);
+
+        if (openTrade === null && !closedThisBar && inWindow) {
           const signal = strategy.generateSignal(i, bar, prev);
           if (signal) {
             const direction = signal.direction;
             let entry = signal.entry;
-            const sl = signal.stopLoss;
+            let sl = signal.stopLoss;
             let rd = Math.abs(entry - sl);
 
             if (rd < 1e-10) continue;
@@ -132,16 +139,30 @@
             } else {
               entry -= spreadCost;
             }
-            rd = Math.abs(entry - sl);
 
-            // Compute TP prices
-            const tpPrices = [];
-            for (let t = 0; t < this.config.tp_levels.length; t++) {
-              const rMult = this.config.tp_levels[t][0];
+            // Compute SL + TP prices.
+            let tpPrices = [];
+            if (this.config.fixed_pips) {
+              // Fixed-pip SL/TP measured from the executed entry (Pete's per-pair
+              // model). The strategy only supplies the entry timing + direction;
+              // risk is a fixed number of pips, single full-size target.
+              rd = this.config.sl_pips * pip;
               if (direction === 1) {
-                tpPrices.push(entry + rd * rMult);
+                sl = entry - rd;
+                tpPrices = [entry + this.config.tp_pips * pip];
               } else {
-                tpPrices.push(entry - rd * rMult);
+                sl = entry + rd;
+                tpPrices = [entry - this.config.tp_pips * pip];
+              }
+            } else {
+              rd = Math.abs(entry - sl);
+              for (let t = 0; t < this.config.tp_levels.length; t++) {
+                const rMult = this.config.tp_levels[t][0];
+                if (direction === 1) {
+                  tpPrices.push(entry + rd * rMult);
+                } else {
+                  tpPrices.push(entry - rd * rMult);
+                }
               }
             }
 

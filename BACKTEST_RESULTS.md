@@ -81,3 +81,78 @@ is charged on every entry.
 Sensible next steps: per-pair parameter sweeps (stoch thresholds, EMA lengths,
 SL buffer), restricting to the pairs/sessions where the structure filter adds
 edge, and comparing the `--petes-exit` quick-1:1 variant against the scale-out.
+
+---
+
+# Reproducing Pete's per-pair report (`tools/run_petes.mjs`)
+
+Pete's `Backtest_Master_Report_All_12_Pairs` reports, for **27 Apr – 30 May
+2026** (one month, 12 pairs): **58 trades, 67.2% win rate, +1,394 pips, +94.8k
+(≈ +95%)**. Each pair uses a tuned Stochastic plus a **fixed-pip stop (6–10 p)
+and a fixed-pip target (20–50 p)** → RR 1:2.5 … 1:8.3 (avg 1:4.9).
+
+To test this we added an opt-in `fixed_pips` mode + entry-window gating to the
+engine and replayed his exact per-pair table on our independent Dukascopy H1
+data — same window first, then the full 13-year history out-of-sample.
+
+## Same window (27 Apr – 30 May 2026), Pete's exact parameters
+
+| | Pete's report | This engine (spread 0) | This engine (0.8p) |
+| --- | --- | --- | --- |
+| Trades | 58 | **56** | 56 |
+| Win rate | **67.2%** | **14.3%** | 12.5% |
+| Total pips | +1,394 | **−127** | −169 |
+| Expectancy | huge + | −0.33 R | −0.42 R |
+
+The **trade count matches (56 vs 58)** — entries and data line up well — but the
+**win rate is inverted**. Our 14% is essentially the random-walk baseline: for an
+average RR of 1:4.9 the geometric break-even hit rate is ~1/(1+4.9) ≈ **17%**. In
+other words the Stoch entries add ~no directional edge; outcomes are dominated by
+the geometry of a tiny stop vs a wide target.
+
+## Full out-of-sample, 2013 → 2026 (same 12 pairs, same params)
+
+| | spread 0.8p | spread 0 |
+| --- | --- | --- |
+| Trades | 7,706 | 7,687 |
+| Win rate | 16.5% | 18.4% |
+| Total pips | −8,813 | −2,833 |
+| Expectancy | −0.147 R | −0.044 R |
+| Profit factor | 0.82 | 0.95 |
+| Equity (1% risk) | → 0 | → ~0 |
+
+Every pair is net-negative out-of-sample; even with **zero** trading costs the
+system loses. Win rate holds at ~16–18% — exactly the no-edge baseline — across
+13 years and ~7,700 trades.
+
+## Diagnosis
+
+The near-perfect trade-count match with an inverted win rate points to a
+**fill/sequencing artifact in Pete's backtest, not a real edge**:
+
+- A 6–10 pip stop is **smaller than a single H1 bar's range** (AUDCAD H1 ATR ≈
+  15–25 pips). Whether SL or TP is hit first is decided *inside* the bar, which
+  H1 OHLC cannot resolve.
+- This engine resolves the ambiguity **conservatively** (checks the bar's low/high
+  against the stop *before* the target), so a bar that touches both counts as a
+  loss. That yields the ~14–18% baseline.
+- Pete's 67% implies the **opposite** convention — the target is credited before
+  the stop (or only the close is checked), flipping most intrabar losers into
+  winners. With a stop this tight that single assumption is the entire result.
+- One-month, in-sample-tuned parameters then make the headline number look
+  spectacular; it does not survive out-of-sample.
+
+**Bottom line:** the strategy as parameterised has no demonstrable out-of-sample
+edge on clean tick-aggregated H1 data. Before trading it, Pete's backtester needs
+either (a) tick/M1 data so 6–10 pip stops can be filled honestly, or (b) a
+documented, conservative intrabar fill rule — and the parameters must be
+validated out-of-sample, not on the month they were fitted to.
+
+Reproduce:
+
+```bash
+cd tools && npm install
+node run_petes.mjs --from 2026-04-27 --to 2026-05-30   # his window
+node run_petes.mjs                                      # full out-of-sample
+node run_petes.mjs --spread 0                           # zero-cost best case
+```
