@@ -1,0 +1,13 @@
+{
+  "name": "backtest-lab-tools",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Data tooling for backtest-lab — Dukascopy OHLC downloader",
+  "scripts": {
+    "fetch": "node fetch_dukascopy.mjs"
+  },
+  "dependencies": {
+    "dukascopy-node": "^1.46.4"
+  }
+}

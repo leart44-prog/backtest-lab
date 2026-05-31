@@ -199,6 +199,7 @@ tr:hover td { background: var(--bg3); }
     <div class="section-title">Strategy</div>
     <select id="strategy-type" onchange="onStrategyTypeChange()" style="margin-bottom:12px">
         <option value="playbook_v5">Playbook v5 — Pattern Zones</option>
+        <option value="pullback">Pullback in Trend — Stoch + HH/LL</option>
         <option value="pine">Pine Script (Custom)</option>
     </select>
 
@@ -224,6 +225,46 @@ tr:hover td { background: var(--bg3); }
             <div class="slider-row"><label>Max Age (bars)</label><input type="number" id="pb_max_age" value="120" step="10" min="20" max="500" style="width:55px"></div>
             <div class="slider-row"><label>Max Touches</label><input type="number" id="pb_max_touches" value="1" step="1" min="0" max="5" style="width:55px"></div>
             <div class="slider-row"><label>Overlap (×ATR)</label><input type="number" id="pb_overlap" value="1.5" step="0.1" min="0.5" max="5" style="width:55px"></div>
+        </div>
+    </div>
+
+    <!-- Pullback in Trend Panel -->
+    <div id="panel-pullback" class="strategy-panel">
+        <div style="padding:10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px;font-size:11px;color:var(--text2);line-height:1.6">
+            <strong style="color:var(--accent)">Pullbacks within a Trend</strong><br>
+            Stochastik-Reversal aus Extrem-Zone<br>
+            + HH (Long) / LL (Short) Bestätigung<br>
+            Trend: EMA fast/slow · SL hinter Swing
+        </div>
+        <div class="section-collapse" onclick="toggleSection(this)">
+            <div class="section-title" style="margin:0;font-size:9px">Pullback Parameter</div>
+            <span class="arrow" style="font-size:9px">▼</span>
+        </div>
+        <div class="section-body hidden">
+            <div class="slider-row"><label>Stoch Period</label><input type="number" id="pbk_stoch" value="14" step="1" min="3" max="50" style="width:55px"></div>
+            <div class="slider-row"><label>Smooth %K</label><input type="number" id="pbk_smoothk" value="3" step="1" min="1" max="10" style="width:55px"></div>
+            <div class="slider-row"><label>Smooth %D</label><input type="number" id="pbk_smoothd" value="3" step="1" min="1" max="10" style="width:55px"></div>
+            <div class="slider-row"><label>Oversold</label><input type="number" id="pbk_os" value="20" step="5" min="5" max="45" style="width:55px"></div>
+            <div class="slider-row"><label>Overbought</label><input type="number" id="pbk_ob" value="80" step="5" min="55" max="95" style="width:55px"></div>
+            <div class="slider-row"><label>EMA Fast</label><input type="number" id="pbk_emaf" value="50" step="1" min="5" max="200" style="width:55px"></div>
+            <div class="slider-row"><label>EMA Slow</label><input type="number" id="pbk_emas" value="200" step="5" min="20" max="400" style="width:55px"></div>
+            <div class="slider-row"><label>Trend Gap (×ATR)</label><input type="number" id="pbk_gap" value="0" step="0.1" min="0" max="2" style="width:55px"></div>
+            <div class="slider-row"><label>Signal Mode</label>
+                <select id="pbk_mode" style="width:90px">
+                    <option value="cross_level">Cross Level</option>
+                    <option value="cross_kd">Cross %K/%D</option>
+                </select>
+            </div>
+            <div class="slider-row"><label>Pullback Window</label><input type="number" id="pbk_pbwin" value="5" step="1" min="1" max="20" style="width:55px"></div>
+            <div class="slider-row"><label>Require HH/LL</label>
+                <select id="pbk_struct" style="width:90px">
+                    <option value="1">Ja</option>
+                    <option value="0">Nein</option>
+                </select>
+            </div>
+            <div class="slider-row"><label>Swing Lookback</label><input type="number" id="pbk_swing" value="10" step="1" min="2" max="50" style="width:55px"></div>
+            <div class="slider-row"><label>SL Swing Lookback</label><input type="number" id="pbk_slswing" value="10" step="1" min="2" max="50" style="width:55px"></div>
+            <div class="slider-row"><label>SL Buffer (×ATR)</label><input type="number" id="pbk_slbuf" value="0.5" step="0.1" min="0" max="3" style="width:55px"></div>
         </div>
     </div>
 
@@ -538,7 +579,27 @@ function togglePair(name, chip) {
 function onStrategyTypeChange() {
     const type = document.getElementById('strategy-type').value;
     document.getElementById('panel-playbook').classList.toggle('active', type === 'playbook_v5');
+    document.getElementById('panel-pullback').classList.toggle('active', type === 'pullback');
     document.getElementById('panel-pine').classList.toggle('active', type === 'pine');
+}
+
+function getPullbackParams() {
+    return {
+        stoch_period:      parseInt(document.getElementById('pbk_stoch').value)   || 14,
+        smooth_k:          parseInt(document.getElementById('pbk_smoothk').value) || 3,
+        smooth_d:          parseInt(document.getElementById('pbk_smoothd').value) || 3,
+        oversold:          parseFloat(document.getElementById('pbk_os').value)    || 20,
+        overbought:        parseFloat(document.getElementById('pbk_ob').value)    || 80,
+        ema_fast:          parseInt(document.getElementById('pbk_emaf').value)    || 50,
+        ema_slow:          parseInt(document.getElementById('pbk_emas').value)    || 200,
+        trend_gap_atr:     parseFloat(document.getElementById('pbk_gap').value)   || 0,
+        signal_mode:       document.getElementById('pbk_mode').value || 'cross_level',
+        pullback_window:   parseInt(document.getElementById('pbk_pbwin').value)   || 5,
+        require_structure: parseInt(document.getElementById('pbk_struct').value),
+        swing_lookback:    parseInt(document.getElementById('pbk_swing').value)   || 10,
+        sl_swing_lookback: parseInt(document.getElementById('pbk_slswing').value) || 10,
+        sl_buffer_atr:     parseFloat(document.getElementById('pbk_slbuf').value) || 0.5,
+    };
 }
 
 function getPlaybookParams() {
@@ -692,6 +753,8 @@ async function runBacktest() {
         msg.pineCode = acePine.getValue();
     } else if (stratType === 'playbook_v5') {
         msg.strategyParams = getPlaybookParams();
+    } else if (stratType === 'pullback') {
+        msg.strategyParams = getPullbackParams();
     }
 
     worker.postMessage(msg);

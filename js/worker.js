@@ -10,7 +10,8 @@ importScripts(
     'pine-parser.js' + _v,
     'backtest-engine.js' + _v,
     'analytics.js' + _v,
-    'playbook-v5.js' + _v
+    'playbook-v5.js' + _v,
+    'strategy-pullback.js' + _v
 );
 
 // Data base URL (set by main thread)
@@ -57,9 +58,10 @@ async function runBacktest(msg) {
 
     // 2. Determine strategy type
     const usePlaybook = strategyType === 'playbook_v5';
+    const usePullback = strategyType === 'pullback';
     let strategyFactory = null;
 
-    if (!usePlaybook) {
+    if (!usePlaybook && !usePullback) {
         // Pine Script mode
         const parseResult = self.parsePineToJS(pineCode);
         if (parseResult.error) {
@@ -105,6 +107,10 @@ async function runBacktest(msg) {
             if (usePlaybook) {
                 // Playbook v5 — create fresh instance per pair (zones are pair-specific)
                 strategy = new self.PlaybookV5Strategy(strategyParams || {});
+                strategy.init(bars);
+            } else if (usePullback) {
+                // Pullback-in-trend — fresh instance per pair (indicator arrays are pair-specific)
+                strategy = new self.PullbackStrategy(strategyParams || {});
                 strategy.init(bars);
             } else {
                 // Pine Script — factory creates strategy object
