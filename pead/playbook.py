@@ -1,8 +1,8 @@
 """Generate a printable PEAD strategy playbook PDF.
 
-Layout: cover, executive summary, trade rules, checklist, day-by-day
-lifecycle, edge mechanics, backtest charts, failure modes, worked example
-(MU 2026-06-15), and a daily workflow page.
+Single tall page layout (no A4 page breaks) so the reader can scroll
+through the whole document continuously. Equity curve and gap-
+stratification chart are rendered with annotated, currency-formatted axes.
 
 Run:
     .venv/bin/python -m pead.playbook --out playbook.pdf
@@ -11,24 +11,23 @@ Run:
 from __future__ import annotations
 
 import argparse
-import io
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 import matplotlib
 
 matplotlib.use("Agg")
+import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
 import numpy as np
 import pandas as pd
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER, TA_LEFT
-from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import cm, mm
 from reportlab.platypus import (
     Image,
-    PageBreak,
     Paragraph,
     SimpleDocTemplate,
     Spacer,
@@ -49,29 +48,38 @@ GREEN = colors.HexColor("#16A34A")
 RED = colors.HexColor("#DC2626")
 AMBER = colors.HexColor("#D97706")
 
+PAGE_W = 21 * cm
+PAGE_H = 300 * cm
+
+INK_HEX = "#0F172A"
+ACCENT_HEX = "#0EA5E9"
+MUTED_HEX = "#475569"
+GREEN_HEX = "#16A34A"
+SUBTLE_HEX = "#E2E8F0"
+
 
 def _styles():
     base = getSampleStyleSheet()
     s = {
         "title": ParagraphStyle(
             "title", parent=base["Title"], fontName="Helvetica-Bold",
-            fontSize=28, leading=32, textColor=INK, alignment=TA_LEFT, spaceAfter=4,
+            fontSize=30, leading=34, textColor=INK, alignment=TA_LEFT, spaceAfter=4,
         ),
         "subtitle": ParagraphStyle(
             "subtitle", parent=base["Normal"], fontName="Helvetica",
             fontSize=13, leading=17, textColor=MUTED, alignment=TA_LEFT, spaceAfter=20,
         ),
-        "h1": ParagraphStyle(
-            "h1", parent=base["Heading1"], fontName="Helvetica-Bold",
-            fontSize=18, leading=22, textColor=INK, spaceBefore=14, spaceAfter=10,
+        "section": ParagraphStyle(
+            "section", parent=base["Heading1"], fontName="Helvetica-Bold",
+            fontSize=20, leading=24, textColor=INK, spaceBefore=24, spaceAfter=12,
         ),
         "h2": ParagraphStyle(
             "h2", parent=base["Heading2"], fontName="Helvetica-Bold",
-            fontSize=13, leading=17, textColor=ACCENT, spaceBefore=10, spaceAfter=6,
+            fontSize=13, leading=17, textColor=ACCENT, spaceBefore=14, spaceAfter=6,
         ),
         "body": ParagraphStyle(
             "body", parent=base["BodyText"], fontName="Helvetica",
-            fontSize=10, leading=14, textColor=INK, spaceAfter=6,
+            fontSize=10.5, leading=15, textColor=INK, spaceAfter=7,
         ),
         "small": ParagraphStyle(
             "small", parent=base["BodyText"], fontName="Helvetica",
@@ -81,11 +89,6 @@ def _styles():
             "label", parent=base["BodyText"], fontName="Helvetica-Bold",
             fontSize=9, leading=12, textColor=MUTED,
         ),
-        "callout": ParagraphStyle(
-            "callout", parent=base["BodyText"], fontName="Helvetica",
-            fontSize=10, leading=14, textColor=INK, leftIndent=8, rightIndent=8,
-            spaceBefore=4, spaceAfter=6,
-        ),
         "footer": ParagraphStyle(
             "footer", parent=base["BodyText"], fontName="Helvetica",
             fontSize=8, leading=10, textColor=MUTED, alignment=TA_CENTER,
@@ -94,11 +97,23 @@ def _styles():
     return s
 
 
+def _section_header(title: str, styles) -> list:
+    """A bold section header with an accent bar above it for visual separation
+    on a continuous-scroll page."""
+    bar = Table([[""]], colWidths=[3 * cm], rowHeights=[3])
+    bar.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, -1), ACCENT),
+        ("LEFTPADDING", (0, 0), (-1, -1), 0),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+        ("TOPPADDING", (0, 0), (-1, -1), 0),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+    ]))
+    return [Spacer(1, 16), bar, Spacer(1, 4), Paragraph(title, styles["section"])]
+
+
 def _hr(width=17 * cm):
     t = Table([[""]], colWidths=[width], rowHeights=[0.4])
-    t.setStyle(TableStyle([
-        ("LINEABOVE", (0, 0), (-1, 0), 0.7, SUBTLE),
-    ]))
+    t.setStyle(TableStyle([("LINEABOVE", (0, 0), (-1, 0), 0.7, SUBTLE)]))
     return t
 
 
@@ -117,7 +132,6 @@ def _rule_box(label: str, value: str, color=ACCENT) -> Table:
         ("BOTTOMPADDING", (0, 1), (0, 1), 8),
         ("BACKGROUND", (0, 0), (-1, -1), BG),
         ("LINEBEFORE", (0, 0), (0, -1), 2.4, color),
-        ("ROUNDEDCORNERS", [4, 4, 4, 4]),
     ]))
     return t
 
@@ -164,12 +178,20 @@ def _stats_table(headers: list[str], rows: list[list[str]]) -> Table:
 def _checklist(items: list[str], styles) -> list:
     out = []
     for it in items:
-        out.append(Paragraph(f"<font color='#0EA5E9'>■</font>&nbsp;&nbsp;{it}", styles["body"]))
+        out.append(Paragraph(f"<font color='{ACCENT_HEX}'>■</font>&nbsp;&nbsp;{it}", styles["body"]))
     return out
 
 
-def _build_charts(out_dir: Path) -> tuple[Path, Path]:
-    """Re-run the synthetic edge backtest and save two charts."""
+def _currency_fmt(x, _pos=None) -> str:
+    if x >= 1_000_000:
+        return f"${x/1_000_000:.1f}M"
+    if x >= 1_000:
+        return f"${x/1_000:.0f}K"
+    return f"${x:.0f}"
+
+
+def _build_charts(out_dir: Path):
+    """Re-run the synthetic edge backtest and save annotated charts."""
     data = make_universe(n=100, drift_60d=0.07)
     trades = run_universe(data, gap_pct=0.05, max_days=60)
     df = trades_to_frame(trades)
@@ -178,43 +200,87 @@ def _build_charts(out_dir: Path) -> tuple[Path, Path]:
     strat = stratify_by_gap(df)
 
     plt.style.use("default")
-    fig, ax = plt.subplots(figsize=(7.5, 3.6))
-    ax.plot(eq.index, eq.values, color="#0EA5E9", linewidth=1.8)
-    ax.fill_between(eq.index, eq.iloc[0], eq.values, where=(eq.values >= eq.iloc[0]),
-                    color="#0EA5E9", alpha=0.12)
-    ax.set_title("Equity (synthetic, 5% per trade, sequential)", fontsize=11, color="#0F172A", loc="left", pad=10)
-    ax.set_ylabel("Equity ($)", fontsize=9, color="#475569")
-    ax.grid(True, linestyle=":", alpha=0.4)
-    ax.spines["top"].set_visible(False)
-    ax.spines["right"].set_visible(False)
-    ax.tick_params(colors="#475569", labelsize=8)
-    plt.tight_layout()
+
+    # --- Equity curve ---
+    fig, ax = plt.subplots(figsize=(10, 4.5), dpi=180)
+    ax.plot(eq.index, eq.values, color=ACCENT_HEX, linewidth=2.0, zorder=3)
+    ax.fill_between(eq.index, eq.iloc[0], eq.values, color=ACCENT_HEX, alpha=0.13, zorder=2)
+    ax.axhline(eq.iloc[0], color=MUTED_HEX, linestyle="--", linewidth=0.8, alpha=0.6, zorder=1)
+
+    total_return = (eq.iloc[-1] / eq.iloc[0] - 1) * 100
+    final_val = eq.iloc[-1]
+    ax.annotate(
+        f"  ${final_val:,.0f}\n  (+{total_return:.0f}%)",
+        xy=(eq.index[-1], final_val),
+        xytext=(8, 0), textcoords="offset points",
+        fontsize=11, fontweight="bold", color=GREEN_HEX, va="center",
+    )
+    ax.annotate(
+        f"  Start ${eq.iloc[0]:,.0f}",
+        xy=(eq.index[0], eq.iloc[0]),
+        xytext=(8, -14), textcoords="offset points",
+        fontsize=9, color=MUTED_HEX, va="center",
+    )
+
+    ax.set_title("Equity Curve  —  100 synth. tickers, 10y, 5% per trade, sequential",
+                 fontsize=12, color=INK_HEX, loc="left", pad=12, fontweight="bold")
+    ax.yaxis.set_major_formatter(mticker.FuncFormatter(_currency_fmt))
+    ax.xaxis.set_major_locator(mdates.YearLocator())
+    ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
+    ax.grid(True, linestyle=":", alpha=0.35, color=MUTED_HEX, zorder=0)
+    for spine in ("top", "right"):
+        ax.spines[spine].set_visible(False)
+    ax.spines["left"].set_color(SUBTLE_HEX)
+    ax.spines["bottom"].set_color(SUBTLE_HEX)
+    ax.tick_params(colors=MUTED_HEX, labelsize=9)
+    ax.margins(x=0.04)
+    fig.subplots_adjust(left=0.10, right=0.86, top=0.88, bottom=0.12)
     eq_path = out_dir / "_eq_curve.png"
-    fig.savefig(eq_path, dpi=160)
+    fig.savefig(eq_path, dpi=180, bbox_inches="tight", facecolor="white")
     plt.close(fig)
 
-    fig, ax = plt.subplots(figsize=(7.5, 3.6))
+    # --- Gap stratification ---
+    fig, ax = plt.subplots(figsize=(10, 4.5), dpi=180)
     x = np.arange(len(strat))
-    bar_w = 0.38
-    ax.bar(x - bar_w / 2, strat["win_rate"] * 100, bar_w, color="#0EA5E9", label="Win Rate (%)")
-    ax.bar(x + bar_w / 2, strat["mean_return"] * 100, bar_w, color="#16A34A", label="Mean Return (%)")
+    bar_w = 0.36
+    win_rates = strat["win_rate"].values * 100
+    mean_rets = strat["mean_return"].values * 100
+
+    bars1 = ax.bar(x - bar_w / 2, win_rates, bar_w, color=ACCENT_HEX, label="Win Rate", zorder=3)
+    bars2 = ax.bar(x + bar_w / 2, mean_rets, bar_w, color=GREEN_HEX, label="Mean Return", zorder=3)
+    ax.axhline(50, color=MUTED_HEX, linestyle=":", linewidth=0.8, alpha=0.5, zorder=1)
+    ax.axhline(0, color=MUTED_HEX, linestyle="-", linewidth=0.5, alpha=0.6, zorder=1)
+
+    for bar, val in zip(bars1, win_rates):
+        ax.annotate(f"{val:.1f}%", xy=(bar.get_x() + bar.get_width() / 2, val),
+                    xytext=(0, 4), textcoords="offset points",
+                    ha="center", fontsize=9, color=INK_HEX, fontweight="bold")
+    for bar, val in zip(bars2, mean_rets):
+        ax.annotate(f"+{val:.1f}%", xy=(bar.get_x() + bar.get_width() / 2, val),
+                    xytext=(0, 4), textcoords="offset points",
+                    ha="center", fontsize=9, color=INK_HEX, fontweight="bold")
+
     ax.set_xticks(x)
-    ax.set_xticklabels(list(strat.index))
-    ax.axhline(50, color="#94A3B8", linestyle=":", linewidth=0.8)
-    ax.set_title("Stratifizierung nach Gap-Groesse", fontsize=11, color="#0F172A", loc="left", pad=10)
-    ax.set_xlabel("Gap-Bucket", fontsize=9, color="#475569")
-    ax.legend(loc="upper left", frameon=False, fontsize=8)
-    ax.grid(True, axis="y", linestyle=":", alpha=0.4)
-    ax.spines["top"].set_visible(False)
-    ax.spines["right"].set_visible(False)
-    ax.tick_params(colors="#475569", labelsize=8)
-    plt.tight_layout()
+    ax.set_xticklabels([str(b) for b in strat.index], fontsize=10, color=INK_HEX)
+    ax.set_title("Win Rate und Mean Return nach Gap-Magnitude",
+                 fontsize=12, color=INK_HEX, loc="left", pad=12, fontweight="bold")
+    ax.set_xlabel("Gap-Bucket (Day-1 Open vs Day-0 Close)", fontsize=10, color=MUTED_HEX, labelpad=8)
+    ax.set_ylabel("Prozent (%)", fontsize=10, color=MUTED_HEX, labelpad=6)
+    ax.legend(loc="upper left", frameon=False, fontsize=10)
+    ax.grid(True, axis="y", linestyle=":", alpha=0.35, color=MUTED_HEX, zorder=0)
+    for spine in ("top", "right"):
+        ax.spines[spine].set_visible(False)
+    ax.spines["left"].set_color(SUBTLE_HEX)
+    ax.spines["bottom"].set_color(SUBTLE_HEX)
+    ax.tick_params(colors=MUTED_HEX, labelsize=9)
+    ymax = max(win_rates.max(), mean_rets.max()) * 1.20
+    ax.set_ylim(min(0, mean_rets.min() * 1.2), ymax)
+    fig.subplots_adjust(left=0.08, right=0.97, top=0.88, bottom=0.14)
     strat_path = out_dir / "_gap_strat.png"
-    fig.savefig(strat_path, dpi=160)
+    fig.savefig(strat_path, dpi=180, bbox_inches="tight", facecolor="white")
     plt.close(fig)
 
-    summ = summary(df)
-    return eq_path, strat_path, summ, strat
+    return eq_path, strat_path, summary(df), strat
 
 
 def _footer(canvas, doc):
@@ -222,9 +288,8 @@ def _footer(canvas, doc):
     canvas.setFont("Helvetica", 8)
     canvas.setFillColor(MUTED)
     canvas.drawCentredString(
-        A4[0] / 2,
-        12 * mm,
-        f"PEAD Breakout Playbook  •  Seite {doc.page}  •  Nur Bildungszwecke. Keine Anlageberatung.",
+        PAGE_W / 2, 12 * mm,
+        "PEAD Breakout Playbook  •  Nur Bildungszwecke. Keine Anlageberatung.",
     )
     canvas.restoreState()
 
@@ -232,46 +297,45 @@ def _footer(canvas, doc):
 def build(out_pdf: Path) -> None:
     out_pdf.parent.mkdir(parents=True, exist_ok=True)
     s = _styles()
-
-    tmp_dir = out_pdf.parent
-    eq_png, strat_png, summ, strat = _build_charts(tmp_dir)
+    eq_png, strat_png, summ, strat = _build_charts(out_pdf.parent)
 
     doc = SimpleDocTemplate(
-        str(out_pdf), pagesize=A4,
+        str(out_pdf),
+        pagesize=(PAGE_W, PAGE_H),
         leftMargin=2 * cm, rightMargin=2 * cm,
-        topMargin=2 * cm, bottomMargin=2 * cm,
+        topMargin=2 * cm, bottomMargin=2.5 * cm,
         title="PEAD Breakout Playbook",
         author="backtest-lab",
     )
 
     story = []
 
-    story.append(Spacer(1, 4 * cm))
+    # === Cover block (no page break — flows continuously) ===
     story.append(Paragraph("PEAD Breakout Playbook", s["title"]))
     story.append(Paragraph(
         "Long-After-Breakout-Candle Strategie fuer Earnings-Gap-Events",
         s["subtitle"],
     ))
     story.append(_hr())
-    story.append(Spacer(1, 1 * cm))
+    story.append(Spacer(1, 8))
     story.append(_kv_table([
         ("Strategie", "Long-Side PEAD mit dynamischem Trailing-Stop"),
         ("Universe", "S&P 100 (anpassbar)"),
         ("Trigger", "Day-1 Open >= +5% Gap vs Day-0 Close"),
         ("Holding", "Bis zu 60 Handelstage, dynamisch verkuerzt"),
         ("Basis", "Bernard & Thomas (1989) Post-Earnings Announcement Drift"),
-        ("Generiert", datetime.utcnow().strftime("%Y-%m-%d")),
+        ("Generiert", datetime.now(timezone.utc).strftime("%Y-%m-%d")),
     ]))
-    story.append(Spacer(1, 1.2 * cm))
+    story.append(Spacer(1, 14))
     story.append(Paragraph(
         "Dieses Playbook beschreibt die operativen Regeln, das Trade-Management, die Edge-Mechanik "
         "und die historischen Cohort-Statistiken. Es ersetzt nicht eigenes Risikomanagement und keine "
         "Discretionary-Pruefung pro Trade.",
         s["small"],
     ))
-    story.append(PageBreak())
 
-    story.append(Paragraph("1. Executive Summary", s["h1"]))
+    # === 1. Executive Summary ===
+    story.extend(_section_header("1. Executive Summary", s))
     story.append(Paragraph(
         "Die Strategie identifiziert Aktien, die nach Earnings-Releases mit einem Gap "
         "von mindestens +5% oeffnen, und geht am Schluss desselben Tages long. Stop liegt unter "
@@ -308,9 +372,9 @@ def build(out_pdf: Path) -> None:
         "Sharpe in dieser Groessenordnung, abhaengig von Universe und Periode.",
         s["small"],
     ))
-    story.append(PageBreak())
 
-    story.append(Paragraph("2. Trade-Regeln", s["h1"]))
+    # === 2. Trade-Regeln ===
+    story.extend(_section_header("2. Trade-Regeln", s))
     story.append(Paragraph(
         "Die folgenden Regeln sind deterministisch und werden ohne Discretionary-Anpassung exekutiert. "
         "Jede Regel hat eine klare Invalidierungs-Bedingung.",
@@ -356,9 +420,9 @@ def build(out_pdf: Path) -> None:
         ("Max gleichzeitige Trades", "5 (Korrelations-Cap auf Tech/Semi-Sektor: max 2)"),
         ("Position-Skalierung", "Keine Pyramiding-Adds, keine Averaging-Down"),
     ]))
-    story.append(PageBreak())
 
-    story.append(Paragraph("3. Pre-Trade Checklist", s["h1"]))
+    # === 3. Pre-Trade Checklist ===
+    story.extend(_section_header("3. Pre-Trade Checklist", s))
     story.append(Paragraph(
         "Bevor du am Day-1-Close eine Position eroeffnest, muss jede der folgenden Bedingungen erfuellt sein. "
         "Eine Verletzung = Skip, kein Discretionary-Override.",
@@ -389,9 +453,9 @@ def build(out_pdf: Path) -> None:
         "Max 2 Trades im gleichen Sektor.",
         "Genuegend Cash-Buffer (15% Konto Cash bleibt frei).",
     ], s))
-    story.append(PageBreak())
 
-    story.append(Paragraph("4. Trade-Lifecycle Tag fuer Tag", s["h1"]))
+    # === 4. Trade-Lifecycle ===
+    story.extend(_section_header("4. Trade-Lifecycle Tag fuer Tag", s))
     story.append(Paragraph(
         "Die Strategie hat vier klar abgegrenzte Phasen mit unterschiedlichen Risk-Profilen.",
         s["body"],
@@ -431,9 +495,9 @@ def build(out_pdf: Path) -> None:
         ("Was zu tun ist", "Position glatt schliessen. Keine Verlaengerung."),
         ("Re-Entry", "Erst nach naechstem Earnings-Release wenn neuer Gap-Trigger ausloest."),
     ]))
-    story.append(PageBreak())
 
-    story.append(Paragraph("5. Edge-Mechanik: Warum die Strategie funktioniert", s["h1"]))
+    # === 5. Edge-Mechanik ===
+    story.extend(_section_header("5. Edge-Mechanik: Warum die Strategie funktioniert", s))
     story.append(Paragraph(
         "PEAD ist die statistisch am laengsten dokumentierte Marktanomalie. Bernard & Thomas (1989) "
         "zeigten erstmals, dass Aktien mit positiver Earnings-Surprise 60-90 Tage nach dem Release "
@@ -471,26 +535,26 @@ def build(out_pdf: Path) -> None:
         "6-Monats-Re-Rating.",
         s["body"],
     ))
-    story.append(PageBreak())
 
-    story.append(Paragraph("6. Backtest-Ergebnisse", s["h1"]))
+    # === 6. Backtest-Ergebnisse ===
+    story.extend(_section_header("6. Backtest-Ergebnisse", s))
     story.append(Paragraph(
         "Simuliert auf einem synthetischen Universe von 100 Tickern, 10 Jahre Tagesdaten, geplanter "
         "PEAD-Drift von 7% ueber 60 Tage. Position-Sizing: 5% Konto-Equity je Trade, sequentielle "
         "Ausfuehrung (eine Position offen zur Zeit).",
         s["body"],
     ))
-    story.append(Spacer(1, 2 * mm))
-    story.append(Image(str(eq_png), width=17 * cm, height=8.1 * cm))
     story.append(Spacer(1, 4 * mm))
+    story.append(Image(str(eq_png), width=17 * cm, height=7.65 * cm))
+    story.append(Spacer(1, 6 * mm))
     story.append(Paragraph("Stratifizierung nach Gap-Magnitude", s["h2"]))
     story.append(Paragraph(
         "Die kritische Validierung: Win-Rate steigt monoton mit Gap-Groesse. Das ist der "
         "Lehrbuch-PEAD-Pattern (Top-Dezil-SUE liefert staerksten Drift).",
         s["body"],
     ))
-    story.append(Image(str(strat_png), width=17 * cm, height=8.1 * cm))
-    story.append(Spacer(1, 3 * mm))
+    story.append(Image(str(strat_png), width=17 * cm, height=7.65 * cm))
+    story.append(Spacer(1, 4 * mm))
     strat_rows = []
     for bucket, row in strat.iterrows():
         strat_rows.append([
@@ -504,9 +568,9 @@ def build(out_pdf: Path) -> None:
         ["Gap-Bucket", "n Trades", "Mean Return", "Win Rate", "Avg Hold (d)"],
         strat_rows,
     ))
-    story.append(PageBreak())
 
-    story.append(Paragraph("7. Failure Modes und Risk Disclosures", s["h1"]))
+    # === 7. Failure Modes ===
+    story.extend(_section_header("7. Failure Modes und Risk Disclosures", s))
     story.append(Paragraph(
         "Die Strategie hat klar definierte Failure Modes. Wer sie ignoriert, draft entweder zu lange "
         "auf einer kaputten These oder schalt zu frueh.",
@@ -555,9 +619,9 @@ def build(out_pdf: Path) -> None:
         "10-25% unter Backtest-Performance.",
         s["small"],
     ))
-    story.append(PageBreak())
 
-    story.append(Paragraph("8. Worked Example: MU am 2026-06-15", s["h1"]))
+    # === 8. Worked Example MU ===
+    story.extend(_section_header("8. Worked Example: MU am 2026-06-15", s))
     story.append(Paragraph(
         "Micron Technology (MU) gappte am 2026-06-15 +19.3% nach Earnings. UBS hob das Price Target "
         "und MU ueberschritt $1 Bio Marktkapitalisierung. Multi-Year-Contracts mit fixed/variable Pricing "
@@ -599,9 +663,9 @@ def build(out_pdf: Path) -> None:
         ("Base-Case (~40%)",  "Drift erreicht $980-$1,030 ueber 40-55 Tage. Forced Exit am Tag 60 oder Trail-Stop-Hit."),
         ("Bear-Case (~30%)",  "Gap-Fill in Tag 1-5, Stop bei $820. Risk-Verlust 1.0% Konto. Re-Entry-Trigger setzen."),
     ]))
-    story.append(PageBreak())
 
-    story.append(Paragraph("9. Daily und Weekly Workflow", s["h1"]))
+    # === 9. Workflow ===
+    story.extend(_section_header("9. Daily und Weekly Workflow", s))
     story.append(Paragraph("Taeglich (10-15 Minuten)", s["h2"]))
     story.extend(_checklist([
         "Pre-Market: Welche Aktien gappen >= +5%? (Finviz Gap-Up Scanner, TradingView Stock Screener.)",
@@ -625,7 +689,7 @@ def build(out_pdf: Path) -> None:
         "Regel-Anpassungen: Nur nach 50+ neuen Trades und mit dokumentierter Begruendung. Keine Tuning nach Einzeltrades.",
         "Macro-Update: Fed-Calendar, Earnings-Season, Sektor-Trends fuer naechsten Monat.",
     ], s))
-    story.append(Spacer(1, 6 * mm))
+    story.append(Spacer(1, 8 * mm))
     story.append(_hr())
     story.append(Spacer(1, 4 * mm))
     story.append(Paragraph(
