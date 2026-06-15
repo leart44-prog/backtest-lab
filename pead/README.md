@@ -47,3 +47,14 @@ reuse the cache. Set `FORCE_REFRESH=1` to bypass.
 - Stratified table by gap size (5-10 %, 10-15 %, 15-20 %, >=20 %)
 - Sequential equity curve at 5 % position size per trade
 - Optional CSV of every trade
+
+## Generate the playbook PDF
+
+```sh
+uv pip install --python pead/.venv/bin/python "reportlab>=4.0" "matplotlib>=3.8"
+pead/.venv/bin/python -m pead.playbook --out PEAD_Playbook.pdf
+```
+
+Produces a 9-page printable playbook with trade rules, lifecycle, edge
+mechanics, embedded backtest charts, failure modes, and the MU 2026-06-15
+worked example.
