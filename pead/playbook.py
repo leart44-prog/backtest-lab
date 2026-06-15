@@ -192,7 +192,7 @@ def _currency_fmt(x, _pos=None) -> str:
 
 def _build_charts(out_dir: Path):
     """Re-run the synthetic edge backtest and save annotated charts."""
-    data = make_universe(n=100, drift_60d=0.07)
+    data = make_universe(n=100, profile="earnings")
     trades = run_universe(data, gap_pct=0.05, max_days=60)
     df = trades_to_frame(trades)
 
