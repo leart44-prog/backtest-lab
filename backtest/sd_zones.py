@@ -26,6 +26,93 @@ from .costs import cost_for
 from .data import load_manifest, load_bars
 
 
+def find_zone_touches(name: str, df: pd.DataFrame,
+                      max_zone_age: int = 240) -> list[dict]:
+    """Raw first-touch signals (order-type agnostic).
+
+    A signal is emitted when a fresh zone's proximal edge is touched while the
+    trend filter passes. What happens next (limit fill, stop trigger, close
+    confirmation) is the entry model's business — see entry_models.py.
+    Signal fields: touch_i, side, proximal, far, atr (at touch), sl_level.
+    """
+    o = df["open"].to_numpy()
+    h = df["high"].to_numpy()
+    l = df["low"].to_numpy()
+    c = df["close"].to_numpy()
+    atr = df["atr14"].to_numpy()
+    sma = df["sma300"].to_numpy()
+    slope = df["sma300_slope"].to_numpy()
+    idx = df.index
+    n = len(df)
+
+    signals: list[dict] = []
+    zones: list[dict] = []
+
+    for i in range(320, n):
+        if np.isnan(atr[i]) or np.isnan(sma[i]):
+            continue
+        # NB: SL level and buffer ATR use atr[i-1] — the last COMPLETED bar
+        # before the touch. A resting limit fills mid-bar; the touch bar's own
+        # ATR is not knowable at fill time (audit finding: pro-strategy leak).
+        atr_known = atr[i - 1]
+        if np.isnan(atr_known):
+            continue
+        still = []
+        for z in zones:
+            if i - z["created_i"] > max_zone_age:
+                continue
+            if z["side"] == "long":
+                touched = l[i] <= z["proximal"]
+                trend_ok = c[i - 1] > sma[i - 1] and slope[i - 1] > 0
+                if touched:
+                    sl_level = z["far"] - 0.25 * atr_known
+                    if trend_ok and sl_level < z["proximal"]:
+                        signals.append({
+                            "instrument": name, "ts": idx[i], "touch_i": i,
+                            "side": "long", "proximal": float(z["proximal"]),
+                            "far": float(z["far"]), "atr": float(atr_known),
+                            "sl_level": float(sl_level),
+                        })
+                    continue
+            else:
+                touched = h[i] >= z["proximal"]
+                trend_ok = c[i - 1] < sma[i - 1] and slope[i - 1] < 0
+                if touched:
+                    sl_level = z["far"] + 0.25 * atr_known
+                    if trend_ok and sl_level > z["proximal"]:
+                        signals.append({
+                            "instrument": name, "ts": idx[i], "touch_i": i,
+                            "side": "short", "proximal": float(z["proximal"]),
+                            "far": float(z["far"]), "atr": float(atr_known),
+                            "sl_level": float(sl_level),
+                        })
+                    continue
+            still.append(z)
+        zones = still
+
+        for base_len in (1, 2, 3):
+            b0 = i - 1 - base_len
+            if b0 < 1:
+                continue
+            base_h = h[b0:i - 1].max()
+            base_l = l[b0:i - 1].min()
+            base_ok = all((h[j] - l[j]) <= 0.8 * atr[j] for j in range(b0, i - 1)
+                          if not np.isnan(atr[j]))
+            if not base_ok:
+                continue
+            move = c[i] - c[b0 - 1]
+            if c[i - 1] > o[i - 1] and c[i] > o[i] and move >= 1.5 * atr[i]:
+                zones.append({"side": "long", "proximal": base_h, "far": base_l,
+                              "created_i": i})
+                break
+            if c[i - 1] < o[i - 1] and c[i] < o[i] and -move >= 1.5 * atr[i]:
+                zones.append({"side": "short", "proximal": base_l, "far": base_h,
+                              "created_i": i})
+                break
+
+    return signals
+
+
 def prep_4h(name: str) -> pd.DataFrame:
     df = load_bars(name).copy()
     c = df["close"]

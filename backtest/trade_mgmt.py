@@ -89,6 +89,7 @@ def replay(
                     "reason": "SL" if not partial_done and stop == stop0 else "STOP_MOVED"}
 
         # 2. partial triggers
+        moved_this_bar = False
         if variant == "M3_partial" and not partial_done:
             hit = (favorable >= partial_lvl) if side == "long" else (favorable <= partial_lvl)
             if hit:
@@ -96,11 +97,13 @@ def replay(
                 frac = 0.5
                 stop = entry              # BE
                 partial_done = True
+                moved_this_bar = True
         elif variant == "M4_chandelier" and not partial_done:
             hit = (favorable >= partial_lvl) if side == "long" else (favorable <= partial_lvl)
             if hit:
                 stop = entry
                 partial_done = True
+                moved_this_bar = True
         elif variant == "M5_mp1" and not partial_done:
             hit = (favorable >= mp1_tp1) if side == "long" else (favorable <= mp1_tp1)
             if hit:
@@ -108,6 +111,17 @@ def replay(
                 frac = 2 / 3
                 stop = entry
                 partial_done = True
+                moved_this_bar = True
+
+        # 2b. conservative same-bar check of the freshly moved stop: intrabar
+        # ordering is unknowable, so assume the adverse extreme came AFTER the
+        # favorable trigger — if it reaches the new stop, exit there.
+        if moved_this_bar:
+            hit_new = (adverse <= stop) if side == "long" else (adverse >= stop)
+            if hit_new:
+                r_leg = sgn * (stop - entry) / risk
+                realized += frac * r_leg
+                return {"r": realized, "bars_held": held, "reason": "BE_SAME_BAR"}
 
         # 3. fixed target
         if tp is not None:
