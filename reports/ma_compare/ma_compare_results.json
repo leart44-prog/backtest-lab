@@ -1,0 +1,104 @@
+{
+  "test_a_pullback": {
+    "EMA10": {
+      "n": 6553,
+      "win_rate": 0.344,
+      "avg_r": 0.0321,
+      "pf": 1.049,
+      "sum_r": 210.6
+    },
+    "SMA10": {
+      "n": 5014,
+      "win_rate": 0.345,
+      "avg_r": 0.0351,
+      "pf": 1.054,
+      "sum_r": 176.2
+    },
+    "EMA20": {
+      "n": 6072,
+      "win_rate": 0.357,
+      "avg_r": 0.072,
+      "pf": 1.112,
+      "sum_r": 437.3
+    },
+    "SMA20": {
+      "n": 5156,
+      "win_rate": 0.352,
+      "avg_r": 0.0571,
+      "pf": 1.088,
+      "sum_r": 294.3
+    }
+  },
+  "test_b_cross": {
+    "EMA10": {
+      "n": 1892,
+      "win_rate": 0.329,
+      "avg_trade_pct": 0.155,
+      "pf": 1.224,
+      "sum_return_pct": 293.9
+    },
+    "EMA20": {
+      "n": 1351,
+      "win_rate": 0.302,
+      "avg_trade_pct": 0.206,
+      "pf": 1.264,
+      "sum_return_pct": 278.8
+    },
+    "EMA50": {
+      "n": 804,
+      "win_rate": 0.267,
+      "avg_trade_pct": 0.445,
+      "pf": 1.515,
+      "sum_return_pct": 357.8
+    },
+    "EMA100": {
+      "n": 539,
+      "win_rate": 0.249,
+      "avg_trade_pct": 0.729,
+      "pf": 1.781,
+      "sum_return_pct": 392.9
+    },
+    "EMA200": {
+      "n": 321,
+      "win_rate": 0.237,
+      "avg_trade_pct": 1.4,
+      "pf": 2.358,
+      "sum_return_pct": 449.5
+    },
+    "SMA10": {
+      "n": 1790,
+      "win_rate": 0.348,
+      "avg_trade_pct": 0.188,
+      "pf": 1.268,
+      "sum_return_pct": 335.9
+    },
+    "SMA20": {
+      "n": 1209,
+      "win_rate": 0.313,
+      "avg_trade_pct": 0.295,
+      "pf": 1.36,
+      "sum_return_pct": 356.1
+    },
+    "SMA50": {
+      "n": 709,
+      "win_rate": 0.276,
+      "avg_trade_pct": 0.547,
+      "pf": 1.636,
+      "sum_return_pct": 387.9
+    },
+    "SMA100": {
+      "n": 466,
+      "win_rate": 0.268,
+      "avg_trade_pct": 0.877,
+      "pf": 1.927,
+      "sum_return_pct": 408.5
+    },
+    "SMA200": {
+      "n": 300,
+      "win_rate": 0.213,
+      "avg_trade_pct": 1.474,
+      "pf": 2.375,
+      "sum_return_pct": 442.3
+    }
+  }
+}
