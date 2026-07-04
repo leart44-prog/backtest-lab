@@ -1,4 +1,4 @@
-# Trading-Playbooks v2.1 — evidenzbasiert überarbeitet
+# Trading-Playbooks v2.2 — evidenzbasiert überarbeitet
 
 Stand: 2026-07-02. **v2.1-Ergänzung** (nach Test des User-Setups,
 reports/user_breakout/): B1 High-Breakout mit Sektor-Top-5 als zweites
@@ -30,10 +30,15 @@ Evidenz-Hierarchie dieser Session:
 - **R1.3** Zusätzlicher Vorrang: Titel innerhalb 15 % ihres 52-Wochen-Hochs.
   `[P:52W-High — Nähe zum 52W-Hoch trägt den Momentum-Effekt]`
 - **R1.4** Max. 3 offene Positionen aus demselben Sektor-Cluster. `[!]`
-- **R1.5 Sektor-Gate (v2.1):** Handelbar nur Titel, deren GICS-Sektor im
-  Top-5-Rang (von 11) liegt. Sektor-Rang = Blend der equal-weight
-  21/63/126-Tage-Returns, Vortagesstand. Grösster gemessener Einzel-Hebel:
-  +0.22 R/Trade auf High-Breakouts (PF 1.94 → 2.46). `[BT:user_breakout]`
+- **R1.5 Sektor-Gate (v2.2):** Handelbar nur Titel, deren Sektor zu den
+  **Top 3 von 11 nach 63-Tage-Return** gehört (wöchentlich aktualisiert;
+  live via SPDR-Sektor-ETFs: XLK, XLV, XLF, XLY, XLP, XLE, XLI, XLB, XLU,
+  XLRE, XLC). Top 5 als Breiten-Fallback zulässig. Optional: Schlägt kein
+  Sektor SPY auf 63 Tage, Grösse halbieren (Regime-Warnung). Strenge-
+  Gradient monoton (Top3 PF 2.69 > Top5 2.35 > Top8 2.38 > kein Filter
+  1.94); 3M-Lookback = Performance von 1M bei ~30 % weniger Rotation;
+  3M/Top3 zugleich konsistentester Kandidat über die Jahre (2015: −0.02
+  statt −0.17). `[BT:sector_opt]`
 
 ## 2. Regime-Filter (täglich, vor jeder neuen Order)
 

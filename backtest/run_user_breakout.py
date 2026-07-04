@@ -94,7 +94,7 @@ def simulate_fixed(df, entry_i, entry, stop, tp_mult, max_bars=400):
 
 def run_setup(stocks, sec_ranks, smap, setup: str, tp_mult: float,
               use_sector: bool, ext_filter: bool = True,
-              sl_buffer: float = 0.0) -> pd.DataFrame:
+              sl_buffer: float = 0.0, top_n: int = 5) -> pd.DataFrame:
     recs = []
     # fast point-in-time sector lookup: shift(1) = prior-day rank, ffill,
     # then binary search on int64 timestamps
@@ -124,7 +124,7 @@ def run_setup(stocks, sec_ranks, smap, setup: str, tp_mult: float,
             if use_sector:
                 pos = np.searchsorted(sr_ts, idx[i].value, side="right") - 1
                 rk = sr_cols[sec][pos] if pos >= 0 else np.nan
-                if not np.isfinite(rk) or rk > 5:
+                if not np.isfinite(rk) or rk > top_n:
                     i += 1
                     continue
 
