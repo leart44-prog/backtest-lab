@@ -1,0 +1,214 @@
+{
+  "trades": [
+    {
+      "sym": "NFLX",
+      "entry_ts": "2026-06-08 13:30",
+      "entry": 81.59,
+      "exit_ts": "2026-06-08 14:42",
+      "exit": 82.55,
+      "shares": 50.9,
+      "entry_type": "STOP",
+      "exit_type": "MARKET",
+      "pnl_usd": 46.8,
+      "hold": "1.2h"
+    },
+    {
+      "sym": "OSCR",
+      "entry_ts": "2026-06-08 14:53",
+      "entry": 26.27,
+      "exit_ts": "2026-07-02 19:26",
+      "exit": 31.94,
+      "shares": 137.4,
+      "entry_type": "MARKET",
+      "exit_type": "MARKET",
+      "pnl_usd": 777.6,
+      "hold": "24d"
+    },
+    {
+      "sym": "LUNR",
+      "entry_ts": "2026-06-09 15:36",
+      "entry": 26.79,
+      "exit_ts": "2026-06-10 13:30",
+      "exit": 27.33,
+      "shares": 49.5,
+      "entry_type": "STOP",
+      "exit_type": "MARKET",
+      "pnl_usd": 24.7,
+      "hold": "22h"
+    },
+    {
+      "sym": "NVDA",
+      "entry_ts": "2026-06-09 16:16",
+      "entry": 201.28,
+      "exit_ts": "2026-06-23 13:30",
+      "exit": 201.4,
+      "shares": 26.5,
+      "entry_type": "LIMIT",
+      "exit_type": "STOP(BE)",
+      "pnl_usd": 1.1,
+      "hold": "14d"
+    },
+    {
+      "sym": "TSM",
+      "entry_ts": "2026-06-18 15:02",
+      "entry": 452.18,
+      "exit_ts": "2026-06-23 13:30",
+      "exit": 438.64,
+      "shares": 17.9,
+      "entry_type": "MARKET",
+      "exit_type": "STOP",
+      "pnl_usd": -244.7,
+      "hold": "5d"
+    },
+    {
+      "sym": "FRO",
+      "entry_ts": "2026-06-18 18:22",
+      "entry": 40.19,
+      "exit_ts": "2026-06-25 13:56",
+      "exit": 40.31,
+      "shares": 134.4,
+      "entry_type": "STOP",
+      "exit_type": "STOP(BE)",
+      "pnl_usd": 14.2,
+      "hold": "7d"
+    },
+    {
+      "sym": "ADI",
+      "entry_ts": "2026-06-22 13:31",
+      "entry": 439.54,
+      "exit_ts": "2026-06-22 19:41",
+      "exit": 444.13,
+      "shares": 9.0,
+      "entry_type": "MARKET",
+      "exit_type": "MARKET",
+      "pnl_usd": 37.1,
+      "hold": "6.2h"
+    },
+    {
+      "sym": "GOOGL",
+      "entry_ts": "2026-06-22 14:55",
+      "entry": 345.27,
+      "exit_ts": "2026-06-23 14:03",
+      "exit": 348.45,
+      "shares": 13.7,
+      "entry_type": "LIMIT",
+      "exit_type": "MARKET",
+      "pnl_usd": 41.4,
+      "hold": "23h"
+    },
+    {
+      "sym": "MNQ",
+      "entry_ts": "2026-06-26 14:34",
+      "entry": 29598.25,
+      "exit_ts": "2026-06-26 15:30",
+      "exit": 29596.75,
+      "shares": 1,
+      "entry_type": "MARKET",
+      "exit_type": "STOP",
+      "pnl_usd": 1.8,
+      "hold": "56m short"
+    },
+    {
+      "sym": "ANET",
+      "entry_ts": "2026-06-29 15:00",
+      "entry": 161.25,
+      "exit_ts": "2026-07-01 13:32",
+      "exit": 161.28,
+      "shares": 38.5,
+      "entry_type": "STOP",
+      "exit_type": "STOP(BE)",
+      "pnl_usd": -2.3,
+      "hold": "2d"
+    },
+    {
+      "sym": "SNEX",
+      "entry_ts": "2026-06-29 18:55",
+      "entry": 115.54,
+      "exit_ts": "2026-07-02 19:26",
+      "exit": 119.47,
+      "shares": 18.5,
+      "entry_type": "LIMIT",
+      "exit_type": "MARKET",
+      "pnl_usd": 70.3,
+      "hold": "3d"
+    },
+    {
+      "sym": "AMD",
+      "entry_ts": "2026-06-30 13:43",
+      "entry": 552.71,
+      "exit_ts": "2026-06-30 16:53",
+      "exit": 581.18,
+      "shares": 24.7,
+      "entry_type": "STOP",
+      "exit_type": "MARKET",
+      "pnl_usd": 699.9,
+      "hold": "3.2h"
+    },
+    {
+      "sym": "HOOD#1",
+      "entry_ts": "2026-07-01 13:45",
+      "entry": 103.03,
+      "exit_ts": "2026-07-01 13:48",
+      "exit": 103.09,
+      "shares": 204.9,
+      "entry_type": "LIMIT",
+      "exit_type": "STOP",
+      "pnl_usd": 11.2,
+      "hold": "3m"
+    },
+    {
+      "sym": "HOOD#2",
+      "entry_ts": "2026-07-01 13:49",
+      "entry": 103.31,
+      "exit_ts": "2026-07-01 13:51",
+      "exit": 103.45,
+      "shares": 149.7,
+      "entry_type": "LIMIT",
+      "exit_type": "MARKET",
+      "pnl_usd": 19.5,
+      "hold": "6m"
+    }
+  ],
+  "counterfactual": [
+    {
+      "sym": "NFLX",
+      "his_pnl": 46.8,
+      "playbook": "-1R (~-83 USD)",
+      "note": "Stop unter 10-Bar-Low ~79.3 waere 6/16 gerissen; NFLX fiel bis 70.9 (-13%)"
+    },
+    {
+      "sym": "OSCR",
+      "his_pnl": 777.6,
+      "playbook": "~+780 USD (aehnlich)",
+      "note": "3R-Ziel (47) nie erreicht; Position liefe noch, Stand 32.18 (+22.5%)"
+    },
+    {
+      "sym": "NVDA",
+      "his_pnl": 1.1,
+      "playbook": "-1R (~-64 USD)",
+      "note": "Struct-Stop ~196.4 am 6/23 gerissen (Low 196.58->6/26 189.86)"
+    },
+    {
+      "sym": "TSM",
+      "his_pnl": -244.7,
+      "playbook": "-0.35R offen (~-320 USD)",
+      "note": "Struct-Stop ~399 nie erreicht; Stand 434 = -4% unrealisiert"
+    },
+    {
+      "sym": "GOOGL",
+      "his_pnl": 41.4,
+      "playbook": "Stop-Gefahr (~-1R)",
+      "note": "GOOGL fiel nach Exit auf 330.2 (-4.4%); Struct-Stop ~337 waere 6/25-26 gerissen"
+    },
+    {
+      "sym": "AMD",
+      "his_pnl": 699.9,
+      "playbook": "~-0.5R offen (~-440 USD)",
+      "note": "Set-and-forget: AMD 7/2 bei 517.8 (-6.3% vom Entry); sein Verkauf bei 581 = Tageshoch-Zone"
+    }
+  ],
+  "account": {
+    "nlv_chf": 12719.84,
+    "total_pnl_usd": 1498.6
+  }
+}
