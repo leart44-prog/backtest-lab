@@ -1,130 +1,130 @@
 {
   "grid": [
     {
-      "n": 1032,
-      "win_rate": 0.486,
-      "avg_r": 0.845,
-      "pf": 2.69,
-      "sum_r": 872.0,
+      "n": 2708,
+      "win_rate": 0.405,
+      "avg_r": 0.537,
+      "pf": 1.92,
+      "sum_r": 1454.9,
       "cell": "rank|1M|top3",
-      "monthly_turnover": 2.29
+      "monthly_turnover": 2.36
     },
     {
-      "n": 1871,
-      "win_rate": 0.472,
-      "avg_r": 0.78,
-      "pf": 2.51,
-      "sum_r": 1458.6,
+      "n": 3095,
+      "win_rate": 0.413,
+      "avg_r": 0.564,
+      "pf": 1.98,
+      "sum_r": 1744.1,
       "cell": "rank|1M|top5",
-      "monthly_turnover": 2.85
+      "monthly_turnover": 3.0
     },
     {
-      "n": 2613,
-      "win_rate": 0.447,
-      "avg_r": 0.68,
-      "pf": 2.25,
-      "sum_r": 1778.1,
+      "n": 3348,
+      "win_rate": 0.439,
+      "avg_r": 0.65,
+      "pf": 2.18,
+      "sum_r": 2174.9,
       "cell": "rank|1M|top8",
-      "monthly_turnover": 2.24
+      "monthly_turnover": 2.31
     },
     {
-      "n": 1032,
-      "win_rate": 0.486,
-      "avg_r": 0.845,
-      "pf": 2.69,
-      "sum_r": 872.0,
+      "n": 2105,
+      "win_rate": 0.43,
+      "avg_r": 0.629,
+      "pf": 2.12,
+      "sum_r": 1324.4,
       "cell": "rank|3M|top3",
-      "monthly_turnover": 1.64
+      "monthly_turnover": 1.35
     },
     {
-      "n": 1558,
-      "win_rate": 0.454,
-      "avg_r": 0.721,
-      "pf": 2.35,
-      "sum_r": 1122.8,
-      "cell": "rank|3M|top5",
-      "monthly_turnover": 1.91
-    },
-    {
-      "n": 2686,
-      "win_rate": 0.46,
-      "avg_r": 0.732,
-      "pf": 2.38,
-      "sum_r": 1967.3,
-      "cell": "rank|3M|top8",
-      "monthly_turnover": 1.64
-    },
-    {
-      "n": 792,
+      "n": 2709,
       "win_rate": 0.426,
-      "avg_r": 0.572,
-      "pf": 2.01,
-      "sum_r": 452.7,
-      "cell": "rank|6M|top3",
-      "monthly_turnover": 1.18
+      "avg_r": 0.616,
+      "pf": 2.09,
+      "sum_r": 1669.3,
+      "cell": "rank|3M|top5",
+      "monthly_turnover": 1.46
     },
     {
-      "n": 1427,
-      "win_rate": 0.443,
-      "avg_r": 0.635,
+      "n": 3190,
+      "win_rate": 0.435,
+      "avg_r": 0.639,
+      "pf": 2.15,
+      "sum_r": 2038.3,
+      "cell": "rank|3M|top8",
+      "monthly_turnover": 1.37
+    },
+    {
+      "n": 1830,
+      "win_rate": 0.439,
+      "avg_r": 0.639,
       "pf": 2.16,
-      "sum_r": 906.2,
+      "sum_r": 1168.5,
+      "cell": "rank|6M|top3",
+      "monthly_turnover": 1.07
+    },
+    {
+      "n": 2393,
+      "win_rate": 0.446,
+      "avg_r": 0.681,
+      "pf": 2.25,
+      "sum_r": 1629.1,
       "cell": "rank|6M|top5",
-      "monthly_turnover": 1.48
+      "monthly_turnover": 1.07
     },
     {
-      "n": 2500,
-      "win_rate": 0.453,
-      "avg_r": 0.697,
-      "pf": 2.29,
-      "sum_r": 1741.3,
+      "n": 2981,
+      "win_rate": 0.439,
+      "avg_r": 0.661,
+      "pf": 2.2,
+      "sum_r": 1971.4,
       "cell": "rank|6M|top8",
-      "monthly_turnover": 1.12
+      "monthly_turnover": 1.0
     },
     {
-      "n": 924,
-      "win_rate": 0.471,
-      "avg_r": 0.791,
-      "pf": 2.53,
-      "sum_r": 731.2,
+      "n": 2062,
+      "win_rate": 0.426,
+      "avg_r": 0.614,
+      "pf": 2.09,
+      "sum_r": 1266.8,
       "cell": "rank|blend|top3",
-      "monthly_turnover": 1.8
+      "monthly_turnover": 1.5
     },
     {
-      "n": 1559,
-      "win_rate": 0.468,
-      "avg_r": 0.76,
-      "pf": 2.46,
-      "sum_r": 1184.8,
+      "n": 2610,
+      "win_rate": 0.428,
+      "avg_r": 0.613,
+      "pf": 2.09,
+      "sum_r": 1599.7,
       "cell": "rank|blend|top5",
-      "monthly_turnover": 1.8
+      "monthly_turnover": 1.63
     },
     {
-      "n": 2482,
-      "win_rate": 0.452,
-      "avg_r": 0.693,
-      "pf": 2.29,
-      "sum_r": 1721.3,
+      "n": 3120,
+      "win_rate": 0.435,
+      "avg_r": 0.642,
+      "pf": 2.15,
+      "sum_r": 2003.4,
       "cell": "rank|blend|top8",
-      "monthly_turnover": 1.41
+      "monthly_turnover": 1.54
     },
     {
-      "n": 2686,
-      "win_rate": 0.46,
-      "avg_r": 0.732,
-      "pf": 2.38,
-      "sum_r": 1967.3,
+      "n": 2839,
+      "win_rate": 0.423,
+      "avg_r": 0.594,
+      "pf": 2.05,
+      "sum_r": 1687.6,
       "cell": "RS>3M|market",
-      "monthly_turnover": 2.37
+      "monthly_turnover": 1.38
     },
     {
-      "n": 1396,
-      "win_rate": 0.473,
-      "avg_r": 0.779,
-      "pf": 2.51,
-      "sum_r": 1087.7,
+      "n": 2178,
+      "win_rate": 0.438,
+      "avg_r": 0.644,
+      "pf": 2.16,
+      "sum_r": 1402.8,
       "cell": "RS>blend|market",
-      "monthly_turnover": 1.19
+      "monthly_turnover": 1.59
     },
     {
       "n": 4925,
@@ -138,134 +138,134 @@
   "yearly": {
     "blend_top5": {
       "2013": {
-        "n": 247,
-        "win_rate": 0.595,
-        "avg_r": 1.28,
-        "pf": 4.16,
-        "sum_r": 316.1
+        "n": 361,
+        "win_rate": 0.543,
+        "avg_r": 1.094,
+        "pf": 3.39,
+        "sum_r": 394.8
       },
       "2014": {
-        "n": 280,
-        "win_rate": 0.339,
-        "avg_r": 0.331,
-        "pf": 1.5,
-        "sum_r": 92.8
+        "n": 535,
+        "win_rate": 0.396,
+        "avg_r": 0.567,
+        "pf": 1.94,
+        "sum_r": 303.6
       },
       "2015": {
-        "n": 316,
-        "win_rate": 0.215,
-        "avg_r": -0.17,
-        "pf": 0.78,
-        "sum_r": -53.6
+        "n": 505,
+        "win_rate": 0.22,
+        "avg_r": -0.155,
+        "pf": 0.8,
+        "sum_r": -78.1
       },
       "2016": {
-        "n": 315,
-        "win_rate": 0.597,
-        "avg_r": 1.368,
-        "pf": 4.49,
-        "sum_r": 431.0
+        "n": 504,
+        "win_rate": 0.512,
+        "avg_r": 0.972,
+        "pf": 3.0,
+        "sum_r": 489.9
       },
       "2017": {
-        "n": 358,
-        "win_rate": 0.595,
-        "avg_r": 1.133,
-        "pf": 3.98,
-        "sum_r": 405.6
+        "n": 661,
+        "win_rate": 0.495,
+        "avg_r": 0.767,
+        "pf": 2.6,
+        "sum_r": 507.3
       },
       "2018": {
-        "n": 43,
-        "win_rate": 0.442,
-        "avg_r": -0.165,
-        "pf": 0.67,
-        "sum_r": -7.1
+        "n": 44,
+        "win_rate": 0.295,
+        "avg_r": -0.401,
+        "pf": 0.37,
+        "sum_r": -17.7
       }
     },
     "3M_top3": {
       "2013": {
-        "n": 162,
-        "win_rate": 0.568,
-        "avg_r": 1.256,
-        "pf": 3.93,
-        "sum_r": 203.5
+        "n": 359,
+        "win_rate": 0.51,
+        "avg_r": 0.99,
+        "pf": 3.02,
+        "sum_r": 355.3
       },
       "2014": {
-        "n": 195,
-        "win_rate": 0.431,
-        "avg_r": 0.714,
-        "pf": 2.25,
-        "sum_r": 139.3
+        "n": 389,
+        "win_rate": 0.414,
+        "avg_r": 0.636,
+        "pf": 2.09,
+        "sum_r": 247.2
       },
       "2015": {
-        "n": 193,
-        "win_rate": 0.249,
-        "avg_r": -0.019,
-        "pf": 0.97,
-        "sum_r": -3.7
+        "n": 358,
+        "win_rate": 0.226,
+        "avg_r": -0.138,
+        "pf": 0.82,
+        "sum_r": -49.3
       },
       "2016": {
-        "n": 209,
-        "win_rate": 0.55,
-        "avg_r": 1.17,
-        "pf": 3.6,
-        "sum_r": 244.5
+        "n": 410,
+        "win_rate": 0.49,
+        "avg_r": 0.895,
+        "pf": 2.77,
+        "sum_r": 367.1
       },
       "2017": {
-        "n": 244,
-        "win_rate": 0.611,
-        "avg_r": 1.191,
-        "pf": 4.41,
-        "sum_r": 290.5
+        "n": 562,
+        "win_rate": 0.48,
+        "avg_r": 0.729,
+        "pf": 2.48,
+        "sum_r": 409.9
       },
       "2018": {
-        "n": 29,
-        "win_rate": 0.483,
-        "avg_r": -0.075,
-        "pf": 0.82,
-        "sum_r": -2.2
+        "n": 27,
+        "win_rate": 0.37,
+        "avg_r": -0.218,
+        "pf": 0.57,
+        "sum_r": -5.9
       }
     },
     "6M_top3": {
       "2013": {
-        "n": 131,
-        "win_rate": 0.458,
-        "avg_r": 0.789,
-        "pf": 2.47,
-        "sum_r": 103.4
+        "n": 226,
+        "win_rate": 0.566,
+        "avg_r": 1.159,
+        "pf": 3.67,
+        "sum_r": 261.9
       },
       "2014": {
-        "n": 145,
-        "win_rate": 0.428,
-        "avg_r": 0.674,
-        "pf": 2.18,
-        "sum_r": 97.7
+        "n": 413,
+        "win_rate": 0.424,
+        "avg_r": 0.665,
+        "pf": 2.15,
+        "sum_r": 274.8
       },
       "2015": {
-        "n": 173,
-        "win_rate": 0.318,
-        "avg_r": 0.202,
-        "pf": 1.3,
-        "sum_r": 34.9
+        "n": 342,
+        "win_rate": 0.254,
+        "avg_r": -0.034,
+        "pf": 0.95,
+        "sum_r": -11.5
       },
       "2016": {
-        "n": 146,
-        "win_rate": 0.39,
-        "avg_r": 0.515,
-        "pf": 1.88,
-        "sum_r": 75.2
+        "n": 330,
+        "win_rate": 0.506,
+        "avg_r": 0.926,
+        "pf": 2.9,
+        "sum_r": 305.5
       },
       "2017": {
-        "n": 181,
-        "win_rate": 0.53,
-        "avg_r": 0.796,
-        "pf": 2.73,
-        "sum_r": 144.1
+        "n": 473,
+        "win_rate": 0.495,
+        "avg_r": 0.757,
+        "pf": 2.59,
+        "sum_r": 358.0
       },
       "2018": {
-        "n": 16,
-        "win_rate": 0.438,
-        "avg_r": -0.161,
-        "pf": 0.69,
-        "sum_r": -2.6
+        "n": 46,
+        "win_rate": 0.283,
+        "avg_r": -0.44,
+        "pf": 0.32,
+        "sum_r": -20.2
       }
     }
   }

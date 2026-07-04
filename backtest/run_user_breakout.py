@@ -56,7 +56,7 @@ def sector_map() -> dict[str, str]:
 def sector_rank_table(stocks: dict, smap: dict) -> pd.DataFrame:
     """Daily blended sector rank. Row = date, col = sector, value = rank (1=best)."""
     closes = pd.DataFrame({t: df["close"] for t, df in stocks.items()})
-    closes = closes.resample("1D").last()
+    closes = closes.resample("1D").last().dropna(how="all")   # business days only
     sectors = sorted({smap.get(t) for t in closes.columns if smap.get(t)})
     sec_ret = {}
     for sec in sectors:
@@ -97,9 +97,12 @@ def run_setup(stocks, sec_ranks, smap, setup: str, tp_mult: float,
               sl_buffer: float = 0.0, top_n: int = 5) -> pd.DataFrame:
     recs = []
     # fast point-in-time sector lookup: shift(1) = prior-day rank, ffill,
-    # then binary search on int64 timestamps
+    # then binary search on int64 timestamps.
+    # IMPORTANT: force nanosecond units. pandas 3.0 indexes may be datetime64[us];
+    # Timestamp.value is always ns — a unit mismatch here silently returned the
+    # LAST row for every lookup (lookahead bug, caught 2026-07-02).
     sr = sec_ranks.shift(1).ffill()
-    sr_ts = sr.index.asi8
+    sr_ts = sr.index.as_unit("ns").asi8 if hasattr(sr.index, "as_unit") else sr.index.asi8
     sr_cols = {c: sr[c].to_numpy() for c in sr.columns}
     for ticker, df in stocks.items():
         sec = smap.get(ticker)

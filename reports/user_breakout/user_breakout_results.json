@@ -10,12 +10,12 @@
       "cell": "B1|extON|TP2R|secALL"
     },
     {
-      "n": 2068,
-      "win_rate": 0.514,
-      "avg_r": 0.51,
-      "pf": 2.06,
-      "sum_r": 1055.0,
-      "avg_hold_d": 61.4,
+      "n": 3237,
+      "win_rate": 0.482,
+      "avg_r": 0.414,
+      "pf": 1.81,
+      "sum_r": 1341.2,
+      "avg_hold_d": 57.2,
       "cell": "B1|extON|TP2R|secTOP5"
     },
     {
@@ -28,12 +28,12 @@
       "cell": "B1|extON|TP3R|secALL"
     },
     {
-      "n": 1559,
-      "win_rate": 0.468,
-      "avg_r": 0.76,
-      "pf": 2.46,
-      "sum_r": 1184.8,
-      "avg_hold_d": 89.3,
+      "n": 2610,
+      "win_rate": 0.428,
+      "avg_r": 0.613,
+      "pf": 2.09,
+      "sum_r": 1599.7,
+      "avg_hold_d": 82.6,
       "cell": "B1|extON|TP3R|secTOP5"
     },
     {
@@ -46,12 +46,12 @@
       "cell": "B1|extOFF|TP2R|secALL"
     },
     {
-      "n": 2289,
-      "win_rate": 0.508,
-      "avg_r": 0.494,
-      "pf": 2.02,
-      "sum_r": 1129.7,
-      "avg_hold_d": 61.9,
+      "n": 3803,
+      "win_rate": 0.468,
+      "avg_r": 0.374,
+      "pf": 1.71,
+      "sum_r": 1420.7,
+      "avg_hold_d": 56.5,
       "cell": "B1|extOFF|TP2R|secTOP5"
     },
     {
@@ -64,12 +64,12 @@
       "cell": "B1|extOFF|TP3R|secALL"
     },
     {
-      "n": 1688,
-      "win_rate": 0.468,
-      "avg_r": 0.737,
-      "pf": 2.41,
-      "sum_r": 1243.6,
-      "avg_hold_d": 87.9,
+      "n": 2944,
+      "win_rate": 0.421,
+      "avg_r": 0.564,
+      "pf": 1.99,
+      "sum_r": 1659.2,
+      "avg_hold_d": 82.4,
       "cell": "B1|extOFF|TP3R|secTOP5"
     },
     {
@@ -82,12 +82,12 @@
       "cell": "B2_50|SLexact|TP2R|secALL"
     },
     {
-      "n": 2052,
-      "win_rate": 0.358,
-      "avg_r": 0.073,
+      "n": 2105,
+      "win_rate": 0.357,
+      "avg_r": 0.072,
       "pf": 1.11,
-      "sum_r": 150.0,
-      "avg_hold_d": 6.5,
+      "sum_r": 151.0,
+      "avg_hold_d": 6.4,
       "cell": "B2_50|SLexact|TP2R|secTOP5"
     },
     {
@@ -100,11 +100,11 @@
       "cell": "B2_50|SLexact|TP3R|secALL"
     },
     {
-      "n": 1947,
-      "win_rate": 0.291,
-      "avg_r": 0.164,
-      "pf": 1.23,
-      "sum_r": 318.4,
+      "n": 2015,
+      "win_rate": 0.286,
+      "avg_r": 0.144,
+      "pf": 1.2,
+      "sum_r": 290.4,
       "avg_hold_d": 9.8,
       "cell": "B2_50|SLexact|TP3R|secTOP5"
     },
@@ -118,12 +118,12 @@
       "cell": "B2_50|SLbuf.25|TP2R|secALL"
     },
     {
-      "n": 1907,
-      "win_rate": 0.359,
-      "avg_r": 0.076,
-      "pf": 1.12,
-      "sum_r": 145.0,
-      "avg_hold_d": 8.8,
+      "n": 1972,
+      "win_rate": 0.355,
+      "avg_r": 0.065,
+      "pf": 1.1,
+      "sum_r": 128.7,
+      "avg_hold_d": 8.7,
       "cell": "B2_50|SLbuf.25|TP2R|secTOP5"
     },
     {
@@ -136,12 +136,12 @@
       "cell": "B2_50|SLbuf.25|TP3R|secALL"
     },
     {
-      "n": 1775,
-      "win_rate": 0.291,
-      "avg_r": 0.158,
-      "pf": 1.22,
-      "sum_r": 281.1,
-      "avg_hold_d": 13.7,
+      "n": 1876,
+      "win_rate": 0.284,
+      "avg_r": 0.13,
+      "pf": 1.18,
+      "sum_r": 244.8,
+      "avg_hold_d": 13.6,
       "cell": "B2_50|SLbuf.25|TP3R|secTOP5"
     },
     {
@@ -154,12 +154,12 @@
       "cell": "B2_200|SLexact|TP2R|secALL"
     },
     {
-      "n": 953,
-      "win_rate": 0.387,
-      "avg_r": 0.162,
-      "pf": 1.26,
-      "sum_r": 154.0,
-      "avg_hold_d": 7.6,
+      "n": 965,
+      "win_rate": 0.352,
+      "avg_r": 0.057,
+      "pf": 1.09,
+      "sum_r": 55.0,
+      "avg_hold_d": 6.9,
       "cell": "B2_200|SLexact|TP2R|secTOP5"
     },
     {
@@ -172,12 +172,12 @@
       "cell": "B2_200|SLexact|TP3R|secALL"
     },
     {
-      "n": 921,
-      "win_rate": 0.325,
-      "avg_r": 0.291,
-      "pf": 1.43,
-      "sum_r": 267.8,
-      "avg_hold_d": 11.6,
+      "n": 949,
+      "win_rate": 0.287,
+      "avg_r": 0.142,
+      "pf": 1.2,
+      "sum_r": 134.6,
+      "avg_hold_d": 10.7,
       "cell": "B2_200|SLexact|TP3R|secTOP5"
     },
     {
@@ -190,12 +190,12 @@
       "cell": "B2_200|SLbuf.25|TP2R|secALL"
     },
     {
-      "n": 859,
-      "win_rate": 0.392,
-      "avg_r": 0.177,
-      "pf": 1.29,
-      "sum_r": 152.0,
-      "avg_hold_d": 10.6,
+      "n": 907,
+      "win_rate": 0.352,
+      "avg_r": 0.055,
+      "pf": 1.09,
+      "sum_r": 50.0,
+      "avg_hold_d": 9.4,
       "cell": "B2_200|SLbuf.25|TP2R|secTOP5"
     },
     {
@@ -208,12 +208,12 @@
       "cell": "B2_200|SLbuf.25|TP3R|secALL"
     },
     {
-      "n": 831,
-      "win_rate": 0.318,
-      "avg_r": 0.259,
-      "pf": 1.38,
-      "sum_r": 215.1,
-      "avg_hold_d": 15.9,
+      "n": 885,
+      "win_rate": 0.266,
+      "avg_r": 0.054,
+      "pf": 1.07,
+      "sum_r": 47.9,
+      "avg_hold_d": 14.4,
       "cell": "B2_200|SLbuf.25|TP3R|secTOP5"
     }
   ]

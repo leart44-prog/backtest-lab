@@ -1,3 +1,27 @@
+# HINWEIS: ZAHLEN KORRIGIERT AM 2026-07-02
+
+Die urspruenglich hier berichteten Sektor-Resultate waren durch einen
+Lookahead-Bug kontaminiert (pandas-3.0 Zeiteinheiten-Mismatch: der
+Sektor-Rank-Lookup lieferte fuer jede Anfrage die Rangliste des LETZTEN
+Sample-Tages, d.h. Zukunftsinformation). Massgeblich sind jetzt:
+
+- reports/sector_framework/README.md  (korrigierte Zahlen + Framework)
+- die neu generierten CSV/JSON in diesem Ordner (Stand nach Fix)
+
+Korrigierte Kernaussagen:
+- Sektorfilter-Effekt real, aber moderat: +0.07 bis +0.14 R/Trade
+  (PF 1.94 -> 2.09-2.25), NICHT +0.22/+0.30 wie zuvor berichtet.
+- Kein belastbarer Strenge-Gradient (Top3 vs Top5 vs Top8 im Rauschen).
+- Kein belastbarer Lookback-Gewinner (3M/6M/Blend gleichwertig, 1M leicht
+  schwaecher und mit hoechstem Turnover).
+- B2 (MA-Touch) wird durch den Sektorfilter NICHT gerettet - die frueher
+  berichtete PF 1.43 am 200er war ein Artefakt des Bugs. B2 ist auf diesem
+  Sample nicht handelbar (PF 1.07-1.20).
+- Unveraendert gueltig (waren nie vom Bug betroffen, da ohne Sektor-Lookup):
+  B1-secALL-Zellen, Extension-Filter-Befund, TP3R>TP2R, SL-Befunde.
+
+---- Historischer Bericht unten (Zahlen teilweise ungueltig) ----
+
 # Test des User-Playbooks: High-Breakouts + MA-Touch-Reclaims + Sektorstärke
 
 **Daten:** S&P 500 daily 2013–2018, 354/498 Ticker mit GICS-Sektor-Mapping.

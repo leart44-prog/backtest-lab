@@ -29,7 +29,7 @@ os.makedirs(REPORT_DIR, exist_ok=True)
 
 def build_rank_table(stocks, smap, lookbacks: list[int]) -> pd.DataFrame:
     closes = pd.DataFrame({t: df["close"] for t, df in stocks.items()})
-    closes = closes.resample("1D").last()
+    closes = closes.resample("1D").last().dropna(how="all")
     sectors = sorted({smap.get(t) for t in closes.columns if smap.get(t)})
     blend = {}
     for sec in sectors:
@@ -50,7 +50,7 @@ def build_rs_table(stocks, smap, lookbacks: list[int]) -> pd.DataFrame:
     """Relative strength: rank 1 if sector return beats market on the blend,
     else 99. Produces variable breadth (0..11 sectors allowed)."""
     closes = pd.DataFrame({t: df["close"] for t, df in stocks.items()})
-    closes = closes.resample("1D").last()
+    closes = closes.resample("1D").last().dropna(how="all")
     mapped = [t for t in closes.columns if smap.get(t)]
     market = closes[mapped]
     sectors = sorted({smap.get(t) for t in mapped})

@@ -1,10 +1,12 @@
-# Trading-Playbooks v2.2 — evidenzbasiert überarbeitet
+# Trading-Playbooks v2.3 — evidenzbasiert überarbeitet
 
-Stand: 2026-07-02. **v2.1-Ergänzung** (nach Test des User-Setups,
-reports/user_breakout/): B1 High-Breakout mit Sektor-Top-5 als zweites
-Primär-Setup neben Cup-and-Handle; Sektor-Gate als Pflichtregel; B2
-MA-Touch-Reclaim nur am 200er mit Sektorfilter und halber Grösse; B2 am
-50er nicht handeln. Buy-Stop-Entries bestätigt. Details in §3b/§1.5. Jede Regel trägt einen Evidenz-Tag:
+Stand: 2026-07-02. **v2.3-Korrektur:** Ein Lookahead-Bug in den Sektor-Läufen
+(v2.1/v2.2) wurde gefunden und behoben; alle Sektor-Regeln wurden mit
+korrigierten Zahlen neu kalibriert (reports/sector_framework/). Wichtigste
+Korrekturen: Sektor-Effekt moderat (+0.07–0.14 R statt +0.22–0.30); kein
+Top-3-Vorteil gegenüber Top 5; **B2 MA-Touch ist auch am 200er NICHT
+handelbar** (die PF 1.43 war ein Bug-Artefakt). B1 High-Breakout bleibt
+Primär-Setup (secALL-Zahlen waren nie kontaminiert). Details in §1.5/§3b. Jede Regel trägt einen Evidenz-Tag:
 `[BT:x]` = eigener Backtest in diesem Repo, `[P:x]` = SSRN-Paper (siehe
 reports/research/README.md), `[!]` = Schutzregel ohne direkten Test, aus
 Verlust-Logik abgeleitet.
@@ -30,15 +32,15 @@ Evidenz-Hierarchie dieser Session:
 - **R1.3** Zusätzlicher Vorrang: Titel innerhalb 15 % ihres 52-Wochen-Hochs.
   `[P:52W-High — Nähe zum 52W-Hoch trägt den Momentum-Effekt]`
 - **R1.4** Max. 3 offene Positionen aus demselben Sektor-Cluster. `[!]`
-- **R1.5 Sektor-Gate (v2.2):** Handelbar nur Titel, deren Sektor zu den
-  **Top 3 von 11 nach 63-Tage-Return** gehört (wöchentlich aktualisiert;
-  live via SPDR-Sektor-ETFs: XLK, XLV, XLF, XLY, XLP, XLE, XLI, XLB, XLU,
-  XLRE, XLC). Top 5 als Breiten-Fallback zulässig. Optional: Schlägt kein
-  Sektor SPY auf 63 Tage, Grösse halbieren (Regime-Warnung). Strenge-
-  Gradient monoton (Top3 PF 2.69 > Top5 2.35 > Top8 2.38 > kein Filter
-  1.94); 3M-Lookback = Performance von 1M bei ~30 % weniger Rotation;
-  3M/Top3 zugleich konsistentester Kandidat über die Jahre (2015: −0.02
-  statt −0.17). `[BT:sector_opt]`
+- **R1.5 Sektor-Gate (v2.3, korrigiert):** Handelbar nur Titel, deren Sektor
+  **Rang ≤ 5 von 11 auf 63 UND auf 126 Tagen** hält (Persistenz-Check gegen
+  reine 1-Monats-Rotation: „Improving"-Sektoren sind messbar schlechter,
+  PF 1.75 vs 2.12). Wöchentlich via SPDR-ETFs (XLK XLV XLF XLY XLP XLE XLI
+  XLB XLU XLRE XLC). Optionaler Tiebreak: RS-Linie (Sektor÷SPY) über ihrem
+  20d-Schnitt. Realistischer Effekt: **+0.07–0.14 R/Trade** (PF 1.94 →
+  2.09–2.25); Top 3 ist NICHT besser als Top 5; Breadth-Zusatzfilter bringt
+  nichts. Ersetzt den Markt-Regime-Filter nicht (2015/2018 verlieren alle
+  Varianten). `[BT:sector_framework, nach Lookahead-Fix]`
 
 ## 2. Regime-Filter (täglich, vor jeder neuen Order)
 
@@ -76,13 +78,12 @@ Cup-and-Handle-Breakout:
   SMA50. Im Sample ohne messbaren Effekt (PF 2.46 vs 2.41) — bleibt als
   billige Versicherung für Extremregimes. Keine Edge-Erwartung.
   `[BT:user_breakout]`
-- **R3b.3 B2 MA-Touch-Reclaim (Sekundär, HALBE Grösse):** Nur an der SMA200,
-  nur mit Sektor-Gate. Touch-Bar mit Indecision-Kerze (Body ≤ 40 % der
-  Range), Buy-Stop über Kerzen-High + 0.05×ATR, 5 Bars gültig, Cancel bei
-  Bruch des Kerzen-Lows vor Trigger. SL = Kerzen-Low exakt (Puffer brachte
-  hier nichts). TP 3R. `[BT:user_breakout PF 1.43, n=921]`
-- **R3b.4 KEIN MA-Touch-Trade an der SMA50.** PF 1.1–1.2 ist nach
-  Live-Slippage Rauschen. `[BT:user_breakout]`
+- **R3b.3 B2 MA-Touch-Reclaim: NICHT HANDELN (v2.3-Korrektur).** Nach dem
+  Lookahead-Fix ist B2 auch am 200er mit Sektorfilter nur PF 1.07–1.20 —
+  nach Live-Slippage Rauschen. Die früher berichtete PF 1.43 war ein
+  Bug-Artefakt. Gilt für SMA50 UND SMA200. Wer den Touch-Kontext nutzen
+  will: warten, bis daraus ein regulärer B1-20d-Hoch-Breakout wird.
+  `[BT:user_breakout, nach Lookahead-Fix]`
 - **R3b.5 Alle Stock-Entries per Buy-Stop, nie per Limit.** Konsistent mit
   der Order-Typ-Studie (Stop-Entries filtern fallende Messer).
   `[BT:entry_models]`
