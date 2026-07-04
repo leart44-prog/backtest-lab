@@ -1,6 +1,10 @@
-# Trading-Playbooks v2 — evidenzbasiert überarbeitet
+# Trading-Playbooks v2.1 — evidenzbasiert überarbeitet
 
-Stand: 2026-07-02. Jede Regel trägt einen Evidenz-Tag:
+Stand: 2026-07-02. **v2.1-Ergänzung** (nach Test des User-Setups,
+reports/user_breakout/): B1 High-Breakout mit Sektor-Top-5 als zweites
+Primär-Setup neben Cup-and-Handle; Sektor-Gate als Pflichtregel; B2
+MA-Touch-Reclaim nur am 200er mit Sektorfilter und halber Grösse; B2 am
+50er nicht handeln. Buy-Stop-Entries bestätigt. Details in §3b/§1.5. Jede Regel trägt einen Evidenz-Tag:
 `[BT:x]` = eigener Backtest in diesem Repo, `[P:x]` = SSRN-Paper (siehe
 reports/research/README.md), `[!]` = Schutzregel ohne direkten Test, aus
 Verlust-Logik abgeleitet.
@@ -26,6 +30,10 @@ Evidenz-Hierarchie dieser Session:
 - **R1.3** Zusätzlicher Vorrang: Titel innerhalb 15 % ihres 52-Wochen-Hochs.
   `[P:52W-High — Nähe zum 52W-Hoch trägt den Momentum-Effekt]`
 - **R1.4** Max. 3 offene Positionen aus demselben Sektor-Cluster. `[!]`
+- **R1.5 Sektor-Gate (v2.1):** Handelbar nur Titel, deren GICS-Sektor im
+  Top-5-Rang (von 11) liegt. Sektor-Rang = Blend der equal-weight
+  21/63/126-Tage-Returns, Vortagesstand. Grösster gemessener Einzel-Hebel:
+  +0.22 R/Trade auf High-Breakouts (PF 1.94 → 2.46). `[BT:user_breakout]`
 
 ## 2. Regime-Filter (täglich, vor jeder neuen Order)
 
@@ -52,6 +60,27 @@ Cup-and-Handle-Breakout:
   Kein Intraday-Antizipieren des Closes. `[BT:stock_selection]`
 - **R3.4 Kein Chasing:** Liegt der Trigger-Close > 2 % über dem Handle-Hoch,
   ist der Trade verpasst. Kein Nachspringen am Folgetag. `[!]`
+
+## 3b. Zusatz-Setups (v2.1, getestet in reports/user_breakout/)
+
+- **R3b.1 B1 High-Breakout (Primär, gleichrangig mit Cup-and-Handle):**
+  Buy-Stop über 20-Tage-Hoch + 0.05×ATR14. SL = 10-Bar-Low − 0.5×ATR.
+  TP 3R. Sektor-Gate (R1.5) Pflicht. `[BT:user_breakout PF 2.46, n=1559;
+  Chop-Jahre 2015/2018 negativ → Regime-Filter R2 bleibt Pflicht]`
+- **R3b.2 Extension-Filter:** Kein B1-Entry, wenn Trigger-Level ≥ 4×ATR über
+  SMA50. Im Sample ohne messbaren Effekt (PF 2.46 vs 2.41) — bleibt als
+  billige Versicherung für Extremregimes. Keine Edge-Erwartung.
+  `[BT:user_breakout]`
+- **R3b.3 B2 MA-Touch-Reclaim (Sekundär, HALBE Grösse):** Nur an der SMA200,
+  nur mit Sektor-Gate. Touch-Bar mit Indecision-Kerze (Body ≤ 40 % der
+  Range), Buy-Stop über Kerzen-High + 0.05×ATR, 5 Bars gültig, Cancel bei
+  Bruch des Kerzen-Lows vor Trigger. SL = Kerzen-Low exakt (Puffer brachte
+  hier nichts). TP 3R. `[BT:user_breakout PF 1.43, n=921]`
+- **R3b.4 KEIN MA-Touch-Trade an der SMA50.** PF 1.1–1.2 ist nach
+  Live-Slippage Rauschen. `[BT:user_breakout]`
+- **R3b.5 Alle Stock-Entries per Buy-Stop, nie per Limit.** Konsistent mit
+  der Order-Typ-Studie (Stop-Entries filtern fallende Messer).
+  `[BT:entry_models]`
 
 ## 4. Entry
 
