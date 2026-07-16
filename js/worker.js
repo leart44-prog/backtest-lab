@@ -10,7 +10,8 @@ importScripts(
     'pine-parser.js' + _v,
     'backtest-engine.js' + _v,
     'analytics.js' + _v,
-    'playbook-v5.js' + _v
+    'playbook-v5.js' + _v,
+    'weinstein-hmm.js' + _v
 );
 
 // Data base URL (set by main thread)
@@ -57,9 +58,10 @@ async function runBacktest(msg) {
 
     // 2. Determine strategy type
     const usePlaybook = strategyType === 'playbook_v5';
+    const useWeinstein = strategyType === 'weinstein_hmm';
     let strategyFactory = null;
 
-    if (!usePlaybook) {
+    if (!usePlaybook && !useWeinstein) {
         // Pine Script mode
         const parseResult = self.parsePineToJS(pineCode);
         if (parseResult.error) {
@@ -105,6 +107,10 @@ async function runBacktest(msg) {
             if (usePlaybook) {
                 // Playbook v5 — create fresh instance per pair (zones are pair-specific)
                 strategy = new self.PlaybookV5Strategy(strategyParams || {});
+                strategy.init(bars);
+            } else if (useWeinstein) {
+                // Stan Weinstein Stage Analysis via HMM — fit per pair
+                strategy = new self.WeinsteinHMMStrategy(strategyParams || {});
                 strategy.init(bars);
             } else {
                 // Pine Script — factory creates strategy object
