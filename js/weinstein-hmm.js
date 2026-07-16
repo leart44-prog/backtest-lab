@@ -63,7 +63,8 @@
 
   var DEFAULTS = {
     n_states:      4,      // Weinstein's four stages
-    bars_per_week: 30,     // 4H data ≈ 30 bars/week (auto-scales the windows)
+    auto_bars_per_week: 1, // derive bars/week from the data's timestamps (daily stocks ≈ 5, 4H ≈ 30)
+    bars_per_week: 30,     // fallback / manual value when auto is off
     ma_weeks:      30,     // Weinstein's flagship 30-week moving average
     slope_weeks:   5,      // window used to measure the MA's slope
     mom_weeks:     5,      // trailing momentum window
@@ -105,11 +106,24 @@
 
   WeinsteinHMMStrategy.prototype._windows = function () {
     var c = this.cfg;
+    var bpw = this.effBpw || c.bars_per_week;   // effBpw set in init() from the data
     return {
-      maP:    Math.max(2, Math.round(c.bars_per_week * c.ma_weeks)),
-      slopeP: Math.max(1, Math.round(c.bars_per_week * c.slope_weeks)),
-      momP:   Math.max(1, Math.round(c.bars_per_week * c.mom_weeks))
+      maP:    Math.max(2, Math.round(bpw * c.ma_weeks)),
+      slopeP: Math.max(1, Math.round(bpw * c.slope_weeks)),
+      momP:   Math.max(1, Math.round(bpw * c.mom_weeks))
     };
+  };
+
+  // Derive bars-per-week from calendar span (robust to weekend/holiday gaps):
+  // count of bars divided by elapsed weeks. Daily equities ≈ 5, 24h 4H ≈ 30.
+  WeinsteinHMMStrategy.prototype._detectBarsPerWeek = function (bars) {
+    var n = bars.length;
+    if (n < 2) return this.cfg.bars_per_week;
+    var span = bars[n - 1].time - bars[0].time;      // seconds
+    var weeks = span / (7 * 86400);
+    if (!(weeks > 0)) return this.cfg.bars_per_week;
+    var bpw = Math.round(n / weeks);
+    return Math.max(1, Math.min(60, bpw));
   };
 
   // -----------------------------------------------------------------------
@@ -366,6 +380,9 @@
     this.bars = bars;
     var n = bars.length;
 
+    // Effective bars/week drives the 30-week MA and derived windows.
+    this.effBpw = cfg.auto_bars_per_week ? this._detectBarsPerWeek(bars) : cfg.bars_per_week;
+
     var feat = this._buildFeatures(bars);
     this.ma = feat.ma;
     var X = feat.X, D = 3;
@@ -478,6 +495,7 @@
         f_short_prob:   Math.round(this.shortProb[i] * 1000) / 1000,
         f_ext_ma_pct:   Math.round((bar.c - ma) / ma * 10000) / 100,
         f_ma_slope_up:  slopeUp ? 1 : 0,
+        f_bpw:          this.effBpw,
         f_sl_dist_atr:  Math.round(Math.abs(entry - sl) / bar.atr * 1000) / 1000
       }
     };

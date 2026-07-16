@@ -235,7 +235,7 @@ tr:hover td { background: var(--bg3); }
             4 hidden regimes = Weinstein's 4 stages<br>
             Long on Stage 2 (advance) · Short on Stage 4 (decline)<br>
             30-week MA · fitted on train slice · out-of-sample signals<br>
-            <span style="color:var(--text3)">Best on indices/trending markets (ES, NQ, DAX, YM, RTY).</span>
+            <span style="color:var(--text3)">Auto-erkennt den Timeframe: Einzelaktien (Daily) & Indizes/4H funktionieren beide.</span>
         </div>
         <div class="section-collapse" onclick="toggleSection(this)">
             <div class="section-title" style="margin:0;font-size:9px">HMM Parameter</div>
@@ -243,6 +243,7 @@ tr:hover td { background: var(--bg3); }
         </div>
         <div class="section-body hidden">
             <div class="slider-row"><label>Hidden States</label><input type="number" id="wn_states" value="4" step="1" min="2" max="6" style="width:55px"></div>
+            <div class="slider-row"><label>Auto Bars/Week</label><input type="number" id="wn_auto_bpw" value="1" step="1" min="0" max="1" style="width:55px"></div>
             <div class="slider-row"><label>Bars / Week</label><input type="number" id="wn_bpw" value="30" step="1" min="1" max="60" style="width:55px"></div>
             <div class="slider-row"><label>MA (weeks)</label><input type="number" id="wn_ma_weeks" value="30" step="1" min="5" max="60" style="width:55px"></div>
             <div class="slider-row"><label>Slope Win (weeks)</label><input type="number" id="wn_slope_weeks" value="5" step="1" min="1" max="20" style="width:55px"></div>
@@ -517,6 +518,7 @@ async function initApp() {
 
         // Group by category
         const CATEGORY_LABELS = {
+            stock: 'Stocks',
             forex: 'Forex',
             index: 'Indices',
             commodity: 'Energies & Metals',
@@ -574,6 +576,7 @@ function onStrategyTypeChange() {
 function getWeinsteinParams() {
     return {
         n_states:            parseInt(document.getElementById('wn_states').value) || 4,
+        auto_bars_per_week:  parseInt(document.getElementById('wn_auto_bpw').value),
         bars_per_week:       parseInt(document.getElementById('wn_bpw').value) || 30,
         ma_weeks:            parseInt(document.getElementById('wn_ma_weeks').value) || 30,
         slope_weeks:         parseInt(document.getElementById('wn_slope_weeks').value) || 5,
