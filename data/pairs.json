@@ -528,7 +528,7 @@
     "category": "fx_future",
     "size": 161159,
     "jpy": true,
-    "tick": 1e-06
+    "tick": 0.000001
   },
   {
     "name": "6N",
@@ -549,5 +549,536 @@
     "category": "fx_future",
     "size": 164576,
     "tick": 0.0001
+  },
+  {
+    "name": "AAPL",
+    "bars": 1259,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 24499
+  },
+  {
+    "name": "MSFT",
+    "bars": 1259,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 22290
+  },
+  {
+    "name": "AMZN",
+    "bars": 1259,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 24397
+  },
+  {
+    "name": "GOOGL",
+    "bars": 1259,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 24444
+  },
+  {
+    "name": "FB",
+    "bars": 1259,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 23326
+  },
+  {
+    "name": "NVDA",
+    "bars": 1259,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 21989
+  },
+  {
+    "name": "AVGO",
+    "bars": 1259,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 23054
+  },
+  {
+    "name": "AMD",
+    "bars": 1259,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 19453
+  },
+  {
+    "name": "INTC",
+    "bars": 1259,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 21304
+  },
+  {
+    "name": "CSCO",
+    "bars": 1259,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 21021
+  },
+  {
+    "name": "ORCL",
+    "bars": 1257,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 21128
+  },
+  {
+    "name": "ADBE",
+    "bars": 1259,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 22440
+  },
+  {
+    "name": "CRM",
+    "bars": 1259,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 22127
+  },
+  {
+    "name": "QCOM",
+    "bars": 1259,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 21797
+  },
+  {
+    "name": "TXN",
+    "bars": 1259,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 21657
+  },
+  {
+    "name": "KLAC",
+    "bars": 1259,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 21681
+  },
+  {
+    "name": "VRSN",
+    "bars": 1259,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 21413
+  },
+  {
+    "name": "JPM",
+    "bars": 1259,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 22187
+  },
+  {
+    "name": "GS",
+    "bars": 1259,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 22939
+  },
+  {
+    "name": "MA",
+    "bars": 1259,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 22684
+  },
+  {
+    "name": "V",
+    "bars": 1259,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 22535
+  },
+  {
+    "name": "COF",
+    "bars": 1259,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 21842
+  },
+  {
+    "name": "MCO",
+    "bars": 1259,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 21900
+  },
+  {
+    "name": "BAC",
+    "bars": 1259,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 20907
+  },
+  {
+    "name": "UNH",
+    "bars": 1259,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 22746
+  },
+  {
+    "name": "JNJ",
+    "bars": 1259,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 22150
+  },
+  {
+    "name": "PFE",
+    "bars": 1259,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 20665
+  },
+  {
+    "name": "MRK",
+    "bars": 1259,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 21329
+  },
+  {
+    "name": "ABBV",
+    "bars": 1259,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 21927
+  },
+  {
+    "name": "ANTM",
+    "bars": 1259,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 22570
+  },
+  {
+    "name": "HD",
+    "bars": 1259,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 22482
+  },
+  {
+    "name": "LOW",
+    "bars": 1259,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 21614
+  },
+  {
+    "name": "NKE",
+    "bars": 1259,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 21793
+  },
+  {
+    "name": "MCD",
+    "bars": 1259,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 21910
+  },
+  {
+    "name": "SBUX",
+    "bars": 1259,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 21722
+  },
+  {
+    "name": "COST",
+    "bars": 1259,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 22205
+  },
+  {
+    "name": "WMT",
+    "bars": 1259,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 21536
+  },
+  {
+    "name": "TGT",
+    "bars": 1259,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 21682
+  },
+  {
+    "name": "DIS",
+    "bars": 1259,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 22148
+  },
+  {
+    "name": "NFLX",
+    "bars": 1259,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 25085
+  },
+  {
+    "name": "MAR",
+    "bars": 1259,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 22010
+  },
+  {
+    "name": "AAP",
+    "bars": 1259,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 22326
+  },
+  {
+    "name": "FL",
+    "bars": 1259,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 21675
+  },
+  {
+    "name": "BA",
+    "bars": 1259,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 22924
+  },
+  {
+    "name": "CAT",
+    "bars": 1259,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 22343
+  },
+  {
+    "name": "UNP",
+    "bars": 1259,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 22573
+  },
+  {
+    "name": "MMM",
+    "bars": 1259,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 22394
+  },
+  {
+    "name": "APD",
+    "bars": 1259,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 21965
+  },
+  {
+    "name": "GLW",
+    "bars": 1259,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 20453
+  },
+  {
+    "name": "XYL",
+    "bars": 1259,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 20732
+  },
+  {
+    "name": "IT",
+    "bars": 1259,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 21320
+  },
+  {
+    "name": "PG",
+    "bars": 1259,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 21188
+  },
+  {
+    "name": "KO",
+    "bars": 1259,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 20555
+  },
+  {
+    "name": "PEP",
+    "bars": 1259,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 21586
+  },
+  {
+    "name": "XOM",
+    "bars": 1259,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 21685
+  },
+  {
+    "name": "CVX",
+    "bars": 1259,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 22463
+  },
+  {
+    "name": "NEE",
+    "bars": 1259,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 22127
+  },
+  {
+    "name": "EIX",
+    "bars": 1259,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 21215
+  },
+  {
+    "name": "SBAC",
+    "bars": 1259,
+    "from": 1360281600,
+    "to": 1517961600,
+    "type": "stock",
+    "category": "stock",
+    "size": 22073
   }
 ]

@@ -41,7 +41,8 @@ DEFAULT_TICKERS = [
 
 
 def rows_from_history(df):
-    """Convert a yfinance history DataFrame to [[ts, o, h, l, c], ...]."""
+    """Convert a yfinance history DataFrame to [[ts, o, h, l, c, volume], ...].
+    Volume is kept for the Stage 1→2 breakout strategy's volume confirmation."""
     rows = []
     for ts, row in df.iterrows():
         # ts is a pandas Timestamp; store epoch seconds (UTC)
@@ -50,6 +51,7 @@ def rows_from_history(df):
             float(row["Open"]), float(row["High"]),
             float(row["Low"]), float(row["Close"]),
         )
+        v = float(row["Volume"]) if "Volume" in row and _finite(float(row["Volume"])) else 0.0
         # skip rows with NaNs / non-finite values
         if not all(map(_finite, (o, h, l, c))):
             continue
@@ -57,7 +59,7 @@ def rows_from_history(df):
             o, h, l, c = round(o, 2), round(h, 2), round(l, 2), round(c, 2)
         else:
             o, h, l, c = round(o, 4), round(h, 4), round(l, 4), round(c, 4)
-        rows.append([epoch, o, h, l, c])
+        rows.append([epoch, o, h, l, c, int(v)])
     rows.sort(key=lambda r: r[0])
     return rows
 

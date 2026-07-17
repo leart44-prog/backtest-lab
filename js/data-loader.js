@@ -9,13 +9,14 @@
   // ---------------------------------------------------------------------------
 
   class Bar {
-    constructor(time, o, h, l, c) {
+    constructor(time, o, h, l, c, v) {
       this.time = time;
       this.dt = new Date(time * 1000); // UTC Date
       this.o = o;
       this.h = h;
       this.l = l;
       this.c = c;
+      this.v = v != null ? v : 0;   // volume (0 when the source has none)
       this.body = c - o;
       this.body_abs = Math.abs(c - o);
       this.range = h > l ? h - l : 1e-10;
@@ -137,11 +138,11 @@
     const jsonText = await decompressedResponse.text();
     const rawBars = JSON.parse(jsonText);
 
-    // Build Bar objects from [timestamp, o, h, l, c] arrays
+    // Build Bar objects from [timestamp, o, h, l, c] or [..., c, volume] arrays
     const bars = new Array(rawBars.length);
     for (let i = 0; i < rawBars.length; i++) {
       const r = rawBars[i];
-      bars[i] = new Bar(r[0], r[1], r[2], r[3], r[4]);
+      bars[i] = new Bar(r[0], r[1], r[2], r[3], r[4], r[5]);
     }
 
     // Compute indicators on the full bar series

@@ -11,7 +11,8 @@ importScripts(
     'backtest-engine.js' + _v,
     'analytics.js' + _v,
     'playbook-v5.js' + _v,
-    'weinstein-hmm.js' + _v
+    'weinstein-hmm.js' + _v,
+    'weinstein-breakout.js' + _v
 );
 
 // Data base URL (set by main thread)
@@ -59,9 +60,10 @@ async function runBacktest(msg) {
     // 2. Determine strategy type
     const usePlaybook = strategyType === 'playbook_v5';
     const useWeinstein = strategyType === 'weinstein_hmm';
+    const useBreakout = strategyType === 'weinstein_breakout';
     let strategyFactory = null;
 
-    if (!usePlaybook && !useWeinstein) {
+    if (!usePlaybook && !useWeinstein && !useBreakout) {
         // Pine Script mode
         const parseResult = self.parsePineToJS(pineCode);
         if (parseResult.error) {
@@ -111,6 +113,10 @@ async function runBacktest(msg) {
             } else if (useWeinstein) {
                 // Stan Weinstein Stage Analysis via HMM — fit per pair
                 strategy = new self.WeinsteinHMMStrategy(strategyParams || {});
+                strategy.init(bars);
+            } else if (useBreakout) {
+                // Stan Weinstein Stage 1→2 breakout — long-only daily swing
+                strategy = new self.WeinsteinBreakoutStrategy(strategyParams || {});
                 strategy.init(bars);
             } else {
                 // Pine Script — factory creates strategy object
