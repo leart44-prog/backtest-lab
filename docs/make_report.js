@@ -191,7 +191,89 @@ Nach einem bestätigten Ausbruchs-<i>Schluss</i> über der Basisdecke setzt du e
 
 <div class="box navy"><b>Rechenbeispiel.</b> Basisdecke 100 $, ATR = 3 $. Ausbruch schließt über 100 $ auf Volumen. Buy-Limit füllt beim Retest bei <b>100 $</b>. <b>R = 1,5 × 3 = 4,50 $</b>, SL = <b>95,50 $</b>. TP1 = 100 + 2·4,50 = <b>109 $</b> (30 % raus, SL→100). TP2 = <b>118 $</b> (30 % raus, Trailing an). Rest trailt bei Hoch − 9 $ bis TP3 = <b>136 $</b> (8R).</div>
 
-<h2 class="pagebreak">3 · Parameter-Referenz (optimale Werte)</h2>
+<h2 class="pagebreak">3 · Deep-Dive: Entry — Trigger &amp; wichtige Werte</h2>
+<p>Der Entry ist ein <b>zweistufiger Trigger</b>: zuerst wird ein bestätigter Ausbruch <i>erkannt</i> (Order scharf schalten), dann wird auf dem <i>Retest</i> gefüllt. So bekommst du den engen Stop des Retests statt dem weiten Stop eines Verfolgungskaufs.</p>
+<div class="box navy" style="background:#0f1b30;color:#dbe4f0"><div class="mono" style="font-size:8.6pt;line-height:1.55;white-space:pre;color:#dbe4f0">TÄGLICH prüfen (kausal — nur abgeschlossene Bars):
+
+A) AUSBRUCH ERKENNEN  → Order scharf schalten
+   1. 150-Tage-SMA-Slope ≥ 0            (Trend flach bis steigend)
+   2. Freshness: ≤ 60 Tage seit Kurs unter der SMA war
+   3. Widerstand = höchstes HOCH der letzten 20 Tage
+   4. Ausbruch-Level = Widerstand × 1.001   (0,1 % Puffer)
+   5. Tages-SCHLUSS > Ausbruch-Level  UND  Level > 150-SMA
+   6. Volumen(heute) ≥ 1.5 × 50-Tage-Durchschnitt
+   ⇒ BUY-LIMIT @ Ausbruch-Level, gültig 15 Handelstage
+
+B) FÜLLEN  → Retest der Ausbruchsmarke
+   7. Solange Order aktiv: Tages-TIEF ≤ Ausbruch-Level
+      UND Tages-Schluss noch > 150-SMA
+   ⇒ LONG-FILL @ min(Open, Level)   → sofort SL platzieren</div></div>
+<p><b>Welche Werte sind wichtig?</b> Marginaler Effekt jedes Parameters auf den Expected Value (jeweils <i>ein</i> Wert verändert, Rest = Gewinner-Setup, 498 Aktien):</p>
+<table>
+<tr><th>Stellschraube</th><th>Werte → EV/Trade</th><th>Erkenntnis</th></tr>
+<tr><td><b>Order-Typ</b></td><td>Buy-Limit <b>0,89</b> · Buy-Stop 0,34</td><td>⭐ Wichtigster Hebel — Retest &gt;&gt; Verfolgung</td></tr>
+<tr><td>Widerstand-Fenster</td><td>10T 0,91 · <b>20T 0,89</b> · 40T 0,87 · 60T 0,88</td><td>Kurze Basis minimal besser, insgesamt robust</td></tr>
+<tr><td>Freshness</td><td>aus 0,85 · 30T 0,89 · <b>60T 0,89</b> · 120T 0,88</td><td>Filter hebt Qualität (weniger, bessere Trades)</td></tr>
+<tr><td><b>Volumen-Faktor</b></td><td>aus 0,67 · 1,0× 0,76 · <b>1,5× 0,89</b> · 2,0× 0,95</td><td>⭐ Klarer Effekt — höher = mehr EV, weniger Trades</td></tr>
+<tr><td>MA-Slope-Minimum</td><td>−2 % 0,86 · <b>0 % 0,89</b> · +0,5 % 0,84 · +1 % 0,82</td><td>„flach genügt" — steilere Vorgabe schadet nur</td></tr>
+</table>
+
+<h2 class="pagebreak">4 · Deep-Dive: Stop-Loss</h2>
+<div class="box red"><b>Formel:</b> <span class="mono">SL = Entry − 1,5 × ATR(14)</span> &nbsp;→&nbsp; das definiert dein Risiko <b>R = Entry − SL</b>.<br>
+Der ATR-Stop <b>passt sich der Volatilität jeder Aktie an</b> — volatile Titel bekommen automatisch mehr Luft, ruhige einen engeren Stop. Ein fester Prozent-Stop kann das nicht.</div>
+<h3>Positionsgrößen-Formel (fixes Risiko je Trade)</h3>
+<div class="box navy"><span class="mono">Stückzahl = (Risiko-% × Depot) ÷ (Entry − SL)</span><br>
+<small>Beispiel: 100.000 € Depot, 1 % Risiko = 1.000 €. Entry 100 $, SL 95,50 $ → R = 4,50 $ → 1.000 € / 4,50 $ ≈ <b>222 Stück</b>. So kostet jeder Verlust-Trade exakt 1 R = 1 % — unabhängig von der Aktie.</small></div>
+<p><b>Wie eng stoppen?</b> Enger Stop = kleineres R = jede Bewegung ist mehr R wert → höherer EV:</p>
+<table>
+<tr><th>Stop-Distanz</th><th>1,0×ATR</th><th>1,25×</th><th>1,5×ATR ✔</th><th>2,0×</th><th>2,5×</th><th>3,0×</th></tr>
+<tr><td>EV / Trade</td><td>1,13</td><td>1,01</td><td><b>0,89</b></td><td>0,81</td><td>0,76</td><td>0,75</td></tr>
+<tr><td>Trefferquote</td><td>63,7 %</td><td>60,3 %</td><td><b>57,8 %</b></td><td>54,8 %</td><td>54,0 %</td><td>52,8 %</td></tr>
+</table>
+<div class="box amber"><b>Aber Vorsicht:</b> Sehr enge Stops (1,0×ATR) zeigen im Backtest den höchsten EV, sind live aber <b>anfälliger für Intraday-Rauschen und Slippage</b>. <b>1,5×ATR</b> ist der robuste Kompromiss. Weitere Regeln: <b>Break-Even nach TP1</b> (Stop auf Entry ziehen → Risiko raus); bei Gap unter den Stop wird zum <b>Open</b> ausgeführt (schlechter) — kalkuliere das ein.</div>
+
+<h2 class="pagebreak">5 · Deep-Dive: Target &amp; Trailing</h2>
+<h3>Target — Gewinner laufen lassen</h3>
+<p>Teilverkäufe in R-Vielfachen. Der Erwartungswert ist <span class="mono">EV = Σ pᵢ · Rᵢ</span> — wenige große Gewinner tragen das Ergebnis, also dürfen die Ziele nicht zu früh greifen:</p>
+<table>
+<tr><th>Ziel-Leiter</th><th>EV/Trade</th><th>Trefferquote</th><th>Charakter</th></tr>
+<tr><td>schnell 1R/2R/3R</td><td>0,62</td><td>76,3 %</td><td>viele kleine Gewinne, niedriger EV</td></tr>
+<tr><td>mittel 1,5R/3R/5R</td><td>0,77</td><td>65,8 %</td><td>ausgewogen</td></tr>
+<tr><td><b>laufen 2R/4R/8R ✔</b></td><td><b>0,89</b></td><td><b>57,8 %</b></td><td>empfohlen — robust &amp; stark</td></tr>
+<tr><td>maximal 3R/6R/12R</td><td>1,09</td><td>46,6 %</td><td>höchster EV, aber &lt; 50 % Treffer</td></tr>
+</table>
+<p><small>Aufteilung je Stufe: 30 % / 30 % / 40 %. Je größer die Ziele, desto höher der EV — aber die Trefferquote fällt und du gibst mehr zurück. Weinstein-Prinzip: „Verluste kurz, Gewinne lang."</small></p>
+
+<h3>Trailing — so trailt man am besten</h3>
+<div class="box green"><b>Methode (Chandelier-Trailing):</b> <span class="mono">Trailing-Stop = höchstes Hoch seit Entry − 3 × ATR</span><br>
+Regeln: <b>nur nach oben</b> nachziehen, nie senken · <b>täglich</b> neu berechnen · erst <b>nach TP2 (4R)</b> aktivieren.</div>
+<table>
+<tr><th>Trailing-Stellschraube</th><th>Werte → EV/Trade</th><th>Erkenntnis</th></tr>
+<tr><td>Aktivierung nach…</td><td>TP1 0,86 · <b>TP2 0,89</b> · TP3 0,97</td><td>Später aktivieren = mehr EV (Trend Luft geben)</td></tr>
+<tr><td>Trail-Distanz</td><td>1,5×ATR 0,87 · 2× 0,88 · <b>3× 0,89</b> · 4× 0,91</td><td>Weiter trailen = weniger ausgeschüttelt</td></tr>
+<tr><td>Break-Even nach…</td><td><b>TP1 0,89 (58 % Treffer)</b> · TP2 0,95 (40 %)</td><td>BE früh = ruhiger; BE spät = mehr EV, mehr Risiko</td></tr>
+</table>
+<div class="box navy"><b>Best Practice fürs Trailing:</b> <b>spät aktivieren</b> (ab ~4R), <b>weit stellen</b> (3–4×ATR) und <b>nur hochziehen</b>. Zu früh/zu eng zu trailen ist der häufigste Fehler — es würgt genau die großen Stufe-2-Trends ab, von denen der EV lebt.</div>
+
+<h2 class="pagebreak">6 · Zwei Profile — Balanced vs. Maximum-EV</h2>
+<p>Da du den maximalen Expected Value willst: dieselbe Logik lässt sich auf höchsten EV trimmen (engerer Stop, höhere Volumen­schwelle, größere Ziele, späteres Trailing). Beide sind in beiden Zeithälften stabil.</p>
+<table>
+<tr><th>&nbsp;</th><th>Balanced (empfohlen)</th><th>Maximum-EV (aggressiv)</th></tr>
+<tr><td>Entry</td><td>Buy-Limit-Retest</td><td>Buy-Limit-Retest</td></tr>
+<tr><td>Widerstand-Fenster</td><td>20 Tage</td><td>10 Tage</td></tr>
+<tr><td>Volumen-Faktor</td><td>1,5×Ø</td><td>2,0×Ø</td></tr>
+<tr><td>Initial-Stop</td><td>1,5×ATR</td><td>1,0×ATR</td></tr>
+<tr><td>Ziele</td><td>2R / 4R / 8R</td><td>3R / 6R / 12R</td></tr>
+<tr><td>Break-Even / Trailing</td><td>BE n. TP1 · Trail n. TP2 (3×ATR)</td><td>BE n. TP2 · Trail n. TP3 (4×ATR)</td></tr>
+<tr><td><b>EV / Trade</b></td><td><b>0,89 R</b></td><td><b>1,71 R</b></td></tr>
+<tr><td>Profit-Faktor</td><td>3,12</td><td>4,89</td></tr>
+<tr><td>Trefferquote</td><td>57,8 %</td><td>56,0 %</td></tr>
+<tr><td>Trades</td><td>1.454</td><td>780</td></tr>
+<tr><td>EV H1 2013–15 / H2 2016–18</td><td>0,77 / 1,02</td><td>1,43 / 2,01</td></tr>
+</table>
+<div class="box amber"><b>Trade-off:</b> Das Max-EV-Profil verdoppelt fast den EV pro Trade, handelt aber <b>~halb so oft</b>, nutzt <b>engere Stops</b> (whipsaw-anfälliger) und <b>größere Ziele</b> (mehr Rückgabe, längere Haltedauer, &lt; 50 % der Trades erreichen die großen Ziele). Für die meisten ist <b>Balanced</b> praktikabler; wer den reinen EV maximieren will und die tieferen Drawdowns aushält, nimmt das aggressive Profil.</div>
+
+<h2 class="pagebreak">7 · Parameter-Referenz (optimale Werte)</h2>
 <table>
 <tr><th>Parameter</th><th>Optimalwert</th><th>Bedeutung</th></tr>
 <tr><td>Weinstein-SMA</td><td class="mono">150 Tage (30 Wo.)</td><td>Trend-Linie; muss flach/steigend sein</td></tr>
@@ -206,7 +288,7 @@ Nach einem bestätigten Ausbruchs-<i>Schluss</i> über der Basisdecke setzt du e
 <tr><td>Richtung</td><td class="mono">nur Long</td><td>Stufe 4 = raus, nicht shorten</td></tr>
 </table>
 
-<h2>4 · Ergebnisse & Robustheit</h2>
+<h2 class="pagebreak">8 · Ergebnisse & Robustheit</h2>
 <table>
 <tr><th>Kennzahl</th><th>Gesamt-Universum (498 Aktien) — ehrlich</th><th>Kuratierte 59 Large-Caps (in der App)</th></tr>
 <tr><td>Expected Value / Trade</td><td><b>0,89 R</b></td><td>1,48 R</td></tr>
@@ -221,7 +303,7 @@ Nach einem bestätigten Ausbruchs-<i>Schluss</i> über der Basisdecke setzt du e
 <p><span class="pill b">AVGO 3,7R</span><span class="pill b">VRSN 3,4R</span><span class="pill b">MAR 3,4R</span><span class="pill b">KLAC 3,3R</span><span class="pill b">HD 3,1R</span><span class="pill b">MCO 2,9R</span><span class="pill b">UNP 2,9R</span><span class="pill b">IT 2,9R</span><span class="pill b">APD 2,6R</span><span class="pill b">GLW 2,6R</span> — klassische Stufe-2-Momentum-Leader.</p>
 <div class="box red"><b>Wichtig — richtig lesen.</b> Diese Einzel-EVs beruhen auf nur <b>3–6 Trades</b> je Aktie und sind statistisch dünn. Der Edge liegt in der <b>Breite</b> (funktioniert über 480 Aktien), nicht in einzelnen Titeln. Die richtige Frage ist nicht „welche Aktie", sondern „welches Setup" — und das ist der Stage-1→2-Retest oben.</div>
 
-<h2>5 · Ehrliche Einschränkungen</h2>
+<h2>9 · Ehrliche Einschränkungen</h2>
 <ul>
 <li><b>Survivorship Bias:</b> Der Datensatz sind die S&P-500-Mitglieder von 2018 — delistete Verlierer fehlen. Long-only-Ergebnisse sind dadurch <b>optimistisch</b>.</li>
 <li><b>Bullenmarkt 2013–2018:</b> günstige Phase für Long-Breakouts; in Bärenmärkten hält der Trend-Filter dich flach, aber die absolute Rendite sinkt.</li>
@@ -229,7 +311,7 @@ Nach einem bestätigten Ausbruchs-<i>Schluss</i> über der Basisdecke setzt du e
 <li><b>Kosten:</b> ~0,15 % Entry-Slippage modelliert; reale Kommissionen/Spreads je nach Broker.</li>
 </ul>
 
-<h2>6 · Umsetzung</h2>
+<h2 class="pagebreak">10 · Umsetzung</h2>
 <p><b>Im Backtest Lab:</b> Strategie „<b>Stan Weinstein — Stage 1→2 Breakout (Stocks)</b>" wählen → Aktien-Kategorie (59 echte Titel geladen) → „Backtest starten". Optimale Exit-Config ist voreingestellt; Entry standardmäßig Buy-Limit-Retest (auf Buy-Stop umschaltbar).</p>
 <p><b>Beim Broker (Order-Mechanik):</b> Nach bestätigtem Ausbruch eine <b>Buy-Limit</b> auf das Ausbruchsniveau legen; parallel eine <b>Stop-Loss-(Sell-Stop)</b>-Order 1,5×ATR darunter. Bei Erreichen von +2R Hälfte/30 % verkaufen und den Stop auf Entry (Break-Even) nachziehen; ab +4R als Trailing-Stop (Hoch − 3×ATR) führen.</p>
 <p><b>Frische Daten (ohne Survivorship Bias):</b> <span class="mono">python3 fetch_stocks.py AAPL MSFT NVDA …</span> dort ausführen, wo Yahoo Finance erreichbar ist — die Daten kommen inkl. Volumen im passenden Format, die Strategie läuft direkt darauf.</p>
