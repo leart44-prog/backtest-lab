@@ -62,6 +62,11 @@ if showLabels and firstBreak
 screenVal = firstBreak ? 1 : firstPull ? 2 : 0
 plot(screenVal, "ScreenerSignal", display=display.data_window)
 
+// % Abstand vom 52-Wochen-Hoch (negativ = unter dem Hoch). Im Pine Screener
+// als Filter nutzbar: "PctOff52WH" ≥ -15  → max. 15 % unter dem 52W-Hoch.
+pctOff52 = (close / ta.highest(high, 252) - 1) * 100
+plot(pctOff52, "PctOff52WH", display=display.data_window)
+
 // ---------------- Alerts ----------------
 alertcondition(firstBreak, "Stage 1→2 Breakout", '{{ticker}}: Stage 1→2 Ausbruch — Buy-Limit-Retest an der Basisdecke planen')
 alertcondition(firstPull,  "Stage-2 Pullback",   '{{ticker}}: Stage-2 Pullback an die 30W-Linie — Continuation')
