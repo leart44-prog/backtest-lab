@@ -1,0 +1,71 @@
+//@version=5
+// Weinstein Stage-1→2 Breakout + Stage-2 Pullback — Screener/Alert-Indikator
+// In TradingView: Pine-Editor öffnen → einfügen → "Zum Chart hinzufügen".
+// Nutzung: (a) Alerts setzen ("Any alert() function call" bzw. die beiden
+// alertcondition-Alerts), oder (b) im Pine-Screener über eine Watchlist laufen
+// lassen und auf ScreenerSignal != 0 filtern.
+indicator("Weinstein Stage 1→2 Screener", overlay=true)
+
+// ---------------- Inputs ----------------
+maLongLen = input.int(150, "Weinstein-MA (30W = 150 Tage)")
+maMidLen  = input.int(50,  "Mid-MA (10W = 50 Tage)")
+baseLen   = input.int(20,  "Basis-Lookback (Widerstand)")
+volLen    = input.int(50,  "Volumen-Ø Länge")
+volMult   = input.float(1.5, "Volumen-Faktor (Ausbruch)")
+freshMax  = input.int(60,  "Freshness: max Tage seit Kurs < MA")
+atrLen    = input.int(14,  "ATR-Länge")
+slopeLen  = input.int(20,  "Slope-Fenster (MA steigend?)")
+stopATR   = input.float(1.5, "Initial-Stop (×ATR)")
+matureMin = input.int(25,  "Stage-2-Reife (Tage über MA) für Pullback")
+showLabels = input.bool(true, "Entry/SL/TP-Label anzeigen")
+
+// ---------------- Indikatoren ----------------
+smaL   = ta.sma(close, maLongLen)
+smaM   = ta.sma(close, maMidLen)
+atr    = ta.atr(atrLen)
+avgVol = ta.sma(volume, volLen)
+resist = ta.highest(high, baseLen)[1]            // Decke der Stage-1-Basis (Vorbars)
+rising = smaL > smaL[slopeLen]                    // 30W-Linie flach/steigend
+aboveMA = close > smaL
+sinceBelow = ta.barssince(close < smaL)           // Frische des Reclaims
+
+// ---------------- Setup 1: Stage 1→2 Breakout ----------------
+freshOk = not na(sinceBelow) and sinceBelow <= freshMax
+volOk   = volume >= volMult * avgVol
+breakout = aboveMA and rising and freshOk and volOk and close > resist and resist > smaL
+firstBreak = breakout and not breakout[1]
+
+// ---------------- Setup 2: Stage-2 Pullback (Continuation) ----------------
+mature  = not na(sinceBelow) and sinceBelow >= matureMin
+dipped  = ta.lowest(low, 7) <= smaL * 1.02        // Rücksetzer an die 30W-Linie
+reclaim = close > smaL and close > close[1]
+pullback = aboveMA and rising and mature and dipped and reclaim and smaM > smaL
+firstPull = pullback and not pullback[1]
+
+// ---------------- Level ----------------
+entryB = resist                                   // Buy-Limit-Retest-Level (Breakout)
+rB     = stopATR * atr
+slB    = entryB - rB
+entryP = close                                    // Pullback-Entry ~ Reclaim-Close
+slP    = entryP - stopATR * atr
+
+// ---------------- Plots ----------------
+plot(smaL, "SMA150", color=color.orange, linewidth=2)
+plot(smaM, "SMA50",  color=color.new(color.blue, 20))
+plotshape(firstBreak, "Breakout", shape.triangleup, location.belowbar, color.green, text="1→2", size=size.small)
+plotshape(firstPull,  "Pullback", shape.circle,     location.belowbar, color.new(color.teal, 0), text="PB", size=size.tiny)
+
+if showLabels and firstBreak
+    label.new(bar_index, low, "Entry " + str.tostring(entryB, format.mintick) + "\nSL " + str.tostring(slB, format.mintick) + "\nTP1(2R) " + str.tostring(entryB + 2 * rB, format.mintick) + "\nTP2(4R) " + str.tostring(entryB + 4 * rB, format.mintick), style=label.style_label_up, color=color.new(color.green, 15), textcolor=color.white, size=size.small)
+
+// ScreenerSignal: 1 = Breakout, 2 = Pullback, 0 = kein Setup (nur Data-Window)
+screenVal = firstBreak ? 1 : firstPull ? 2 : 0
+plot(screenVal, "ScreenerSignal", display=display.data_window)
+
+// ---------------- Alerts ----------------
+alertcondition(firstBreak, "Stage 1→2 Breakout", '{{ticker}}: Stage 1→2 Ausbruch — Buy-Limit-Retest an der Basisdecke planen')
+alertcondition(firstPull,  "Stage-2 Pullback",   '{{ticker}}: Stage-2 Pullback an die 30W-Linie — Continuation')
+if firstBreak
+    alert("Stage 1→2 Breakout: " + syminfo.ticker, alert.freq_once_per_bar_close)
+if firstPull
+    alert("Stage-2 Pullback: " + syminfo.ticker, alert.freq_once_per_bar_close)
