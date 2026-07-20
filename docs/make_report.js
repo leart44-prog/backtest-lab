@@ -101,7 +101,36 @@ function entryZoomSVG() {
   return s;
 }
 
-const A = stageCycleSVG(), B = entryZoomSVG();
+// ---------- Diagram C: pullback entries to the rising 30-week line (Stage-2 continuation) ----------
+function pullbackSVG() {
+  const W = 820, H = 300, padL = 44, padR = 16, padT = 18, padB = 28;
+  const N = 240, cycles = 4.5, price = [], xs = [];
+  const f = t => 32 + t * 44 + Math.sin(t * cycles * 2 * Math.PI - Math.PI / 2) * (6.5 + t * 3);
+  for (let i = 0; i < N; i++) { const t = i / (N - 1); xs.push(t); price.push(f(t)); }
+  const k = 14, sma = [];
+  for (let i = 0; i < N; i++) { let s = 0, c = 0; for (let j = Math.max(0, i - k); j <= i; j++) { s += price[j]; c++; } sma.push(s / c); }
+  const pmin = 22, pmax = 88;
+  const X = t => padL + t * (W - padL - padR);
+  const Y = p => padT + (1 - (p - pmin) / (pmax - pmin)) * (H - padT - padB);
+  const path = arr => arr.map((p, i) => (i ? 'L' : 'M') + X(xs[i]).toFixed(1) + ',' + Y(p).toFixed(1)).join(' ');
+  let s = `<svg viewBox="0 0 ${W} ${H}" width="100%" xmlns="http://www.w3.org/2000/svg" font-family="Arial,Helvetica,sans-serif"><rect width="${W}" height="${H}" fill="#f2faf5"/>`;
+  s += `<path d="${path(sma)}" fill="none" stroke="#e08a1e" stroke-width="2.6"/>`;
+  s += `<path d="${path(price)}" fill="none" stroke="#1a2b4a" stroke-width="1.7"/>`;
+  // dots analytically at each oscillation trough (pullback low) = phase 3π/2
+  for (let n = 0; n < cycles; n++) {
+    const t = (0.75 + n) / cycles;
+    if (t < 0.12 || t > 0.97) continue;
+    const yy = Y(f(t));
+    s += `<circle cx="${X(t).toFixed(1)}" cy="${yy.toFixed(1)}" r="4.8" fill="#159a5a" stroke="#fff" stroke-width="1.5"/>`;
+    s += `<line x1="${X(t).toFixed(1)}" y1="${(yy + 3).toFixed(1)}" x2="${X(t).toFixed(1)}" y2="${(yy + 22).toFixed(1)}" stroke="#d1403f" stroke-width="1.3" stroke-dasharray="3 2"/>`;
+  }
+  s += `<text x="${W - padR}" y="${padT + 4}" text-anchor="end" font-size="9" fill="#159a5a" font-weight="700">● Kauf am Pullback zur Linie · rot = SL darunter</text>`;
+  s += `<text x="${padL}" y="${H - 8}" font-size="9" fill="#8a97a6">Zeit → (etablierter Stage-2-Uptrend)</text>`;
+  s += `</svg>`;
+  return s;
+}
+
+const A = stageCycleSVG(), B = entryZoomSVG(), P = pullbackSVG();
 
 // ---------- HTML ----------
 const css = `
@@ -303,7 +332,38 @@ Regeln: <b>nur nach oben</b> nachziehen, nie senken · <b>täglich</b> neu berec
 <p><span class="pill b">AVGO 3,7R</span><span class="pill b">VRSN 3,4R</span><span class="pill b">MAR 3,4R</span><span class="pill b">KLAC 3,3R</span><span class="pill b">HD 3,1R</span><span class="pill b">MCO 2,9R</span><span class="pill b">UNP 2,9R</span><span class="pill b">IT 2,9R</span><span class="pill b">APD 2,6R</span><span class="pill b">GLW 2,6R</span> — klassische Stufe-2-Momentum-Leader.</p>
 <div class="box red"><b>Wichtig — richtig lesen.</b> Diese Einzel-EVs beruhen auf nur <b>3–6 Trades</b> je Aktie und sind statistisch dünn. Der Edge liegt in der <b>Breite</b> (funktioniert über 480 Aktien), nicht in einzelnen Titeln. Die richtige Frage ist nicht „welche Aktie", sondern „welches Setup" — und das ist der Stage-1→2-Retest oben.</div>
 
-<h2>9 · Ehrliche Einschränkungen</h2>
+<h2 class="pagebreak">9 · Stage-2 Continuation — Teile des Trends traden</h2>
+<p>Der 1→2-Ausbruch nimmt den <i>ganzen</i> Run mit. Man kann aber auch <b>innerhalb</b> eines bereits laufenden Stage-2-Uptrends einzelne <b>Etappen</b> handeln. Getestet wurden 7 klassische Continuation-Setups im selben Regime (150-SMA steigend · Kurs &gt; 150-SMA · 50 &gt; 150 · ≥ 25 Tage reif) mit demselben <b>Swing-Exit</b> (1R/2R/3R), auf 498 Aktien.</p>
+<div class="fig">${P}<div class="figcap">Abb. 3 — Continuation: In einem steigenden Trend wird <b>jeder Pullback zur 30-Wochen-Linie</b> gekauft (grün), Stop knapp darunter (rot). Man nimmt eine Etappe mit, nicht den ganzen Run.</div></div>
+<table>
+<tr><th>Setup (im Stage-2-Uptrend)</th><th>EV/Trade</th><th>PF</th><th>Win</th><th>Trades</th><th>Ø Halten</th></tr>
+<tr><td>🥇 <b>Pullback → 30-Wochen-SMA (150d)</b></td><td><b>0,18–0,20 R</b></td><td>1,47</td><td>56 %</td><td>~3.400</td><td>~17 T</td></tr>
+<tr><td>🥈 RSI(14)-Dip &lt; 40 + Turn</td><td>0,16–0,18 R</td><td>1,43</td><td>55 %</td><td>~3.500</td><td>~16 T</td></tr>
+<tr><td>🥉 Pullback → 10-Wochen-SMA (50d)</td><td>0,13–0,16 R</td><td>1,37</td><td>55 %</td><td>~3.800</td><td>~16 T</td></tr>
+<tr><td>Bollinger-Unterband-Tag</td><td>0,14 R</td><td>1,30</td><td>53 %</td><td>~3.900</td><td>~16 T</td></tr>
+<tr><td>Resumption-Breakout (5-Tage-Hoch)</td><td>0,08 R</td><td>1,17</td><td>52 %</td><td>~5.900</td><td>~15 T</td></tr>
+<tr><td>Pullback → 20-Tage-SMA (flach)</td><td>0,08 R</td><td>1,17</td><td>52 %</td><td>~7.900</td><td>~16 T</td></tr>
+<tr><td>✗ 20-Tage-Hoch-Breakout (Flag)</td><td>0,07 R</td><td>1,14</td><td>52 %</td><td>~3.100</td><td>~15 T</td></tr>
+</table>
+
+<h3>Die 4 wichtigsten Erkenntnisse</h3>
+<div class="box green"><b>1. Dips kaufen, NICHT Ausbrüche jagen.</b> Innerhalb eines laufenden Trends schlagen Rücksetzer-Setups (Pullback zur SMA, RSI-Dip, BB-Tag) klar die Breakout-Setups (neue Hochs, Resumption). Das ist das <b>Gegenteil</b> vom Stage-1→2-Entry, wo der Ausbruch gewinnt.</div>
+<div class="box navy"><b>2. Je tiefer der Pullback, desto größer der Edge:</b> 150-SMA (0,20 R) &gt; 50-SMA (0,16 R) &gt; 20-SMA (0,08 R). Der tiefe Rücksetzer zur 30-Wochen-Linie ist Weinsteins klassischer Wiedereinstieg — und empirisch der beste.</div>
+<div class="box red"><b>3. Weiter Stop (2,0–2,5 ATR), nicht eng</b> — ebenfalls umgekehrt zum Breakout. Beim Dip-Kauf schüttelt ein enger Stop dich aus der Pullback-Volatilität: SL 1,5→2,0→2,5 ATR hebt den EV von 0,13 → 0,18 → 0,20 R.</div>
+<div class="box amber"><b>4. Der Exit bestimmt „Etappe vs. Chunk":</b> <span class="mono">1R/2R/3R</span> = saubere kleine Etappe (56 % Win, ~17 T). <span class="mono">2R/3R/4R</span> = größeres Stück (EV 0,29 R, aber 42 % Win, ~28 T). Weiter halten = mehr EV, aber du näherst dich wieder dem „ganzen Run".</div>
+
+<h3>Konkret bestes Setup: „Deep Pullback to the 30-Week Line"</h3>
+<table>
+<tr><th>Baustein</th><th>Regel</th></tr>
+<tr><td>Regime</td><td>150-SMA steigend · Kurs &gt; 150-SMA · 50-SMA &gt; 150-SMA · Trend ≥ 25 Tage reif</td></tr>
+<tr><td>Entry</td><td>Kurs fällt (~7 Tage) bis an die 150-SMA (≤ ~2 %) → kaufe die <b>Rückeroberung</b> (erster Up-Close wieder über der Linie). Praktisch: Buy-Limit an der Linie oder Buy-Stop über dem Reclaim-Hoch.</td></tr>
+<tr><td>Stop-Loss</td><td>Entry − <b>2,0–2,5 × ATR</b> (bzw. knapp unter das Pullback-Tief)</td></tr>
+<tr><td>Target / Exit</td><td>Teilverkäufe <b>1R / 2R / 3R</b>, Break-Even nach TP1 → ~2–3-Wochen-Etappe</td></tr>
+<tr><td>Robustheit</td><td>in beiden Zeithälften positiv: H1 2013–15 = 0,13 R · H2 2016–18 = 0,23 R</td></tr>
+</table>
+<div class="box amber"><b>Ehrliche Einordnung.</b> Diese Continuation-Trades haben einen <b>deutlich dünneren EV</b> (~0,18 R) als der Stage-1→2-Breakout (~0,89 R) — der Preis dafür, nur <i>ein Stück</i> statt des ganzen Runs zu nehmen. Dafür <b>3.000+ statt 1.454 Trades</b> und kürzere Haltedauer. Der Edge ist real, aber schmal → Positionsgröße und Disziplin sind hier noch entscheidender, und Kosten fressen relativ mehr.</div>
+
+<h2 class="pagebreak">10 · Ehrliche Einschränkungen</h2>
 <ul>
 <li><b>Survivorship Bias:</b> Der Datensatz sind die S&P-500-Mitglieder von 2018 — delistete Verlierer fehlen. Long-only-Ergebnisse sind dadurch <b>optimistisch</b>.</li>
 <li><b>Bullenmarkt 2013–2018:</b> günstige Phase für Long-Breakouts; in Bärenmärkten hält der Trend-Filter dich flach, aber die absolute Rendite sinkt.</li>
@@ -311,7 +371,7 @@ Regeln: <b>nur nach oben</b> nachziehen, nie senken · <b>täglich</b> neu berec
 <li><b>Kosten:</b> ~0,15 % Entry-Slippage modelliert; reale Kommissionen/Spreads je nach Broker.</li>
 </ul>
 
-<h2 class="pagebreak">10 · Umsetzung</h2>
+<h2 class="pagebreak">11 · Umsetzung</h2>
 <p><b>Im Backtest Lab:</b> Strategie „<b>Stan Weinstein — Stage 1→2 Breakout (Stocks)</b>" wählen → Aktien-Kategorie (59 echte Titel geladen) → „Backtest starten". Optimale Exit-Config ist voreingestellt; Entry standardmäßig Buy-Limit-Retest (auf Buy-Stop umschaltbar).</p>
 <p><b>Beim Broker (Order-Mechanik):</b> Nach bestätigtem Ausbruch eine <b>Buy-Limit</b> auf das Ausbruchsniveau legen; parallel eine <b>Stop-Loss-(Sell-Stop)</b>-Order 1,5×ATR darunter. Bei Erreichen von +2R Hälfte/30 % verkaufen und den Stop auf Entry (Break-Even) nachziehen; ab +4R als Trailing-Stop (Hoch − 3×ATR) führen.</p>
 <p><b>Frische Daten (ohne Survivorship Bias):</b> <span class="mono">python3 fetch_stocks.py AAPL MSFT NVDA …</span> dort ausführen, wo Yahoo Finance erreichbar ist — die Daten kommen inkl. Volumen im passenden Format, die Strategie läuft direkt darauf.</p>
