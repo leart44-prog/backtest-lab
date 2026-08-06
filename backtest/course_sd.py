@@ -83,6 +83,7 @@ class CZone:
     touches: int = 0        # touches counted AFTER creation
     max_penetration: float = 0.0   # deepest touch, fraction of zone height
     mitigated: bool = False
+    lol: bool = False       # level-on-level (near/overlapping same-direction zone)
 
 
 def scan_zones(df: pd.DataFrame, avg_len: int = 10, size_factor: float = 1.5,

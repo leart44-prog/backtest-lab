@@ -1,0 +1,191 @@
+//@version=5
+// =============================================================================
+//  SD Zones v5 — Synthesis
+//  Dritter Detektor, gebaut aus der Evidenz beider Vorgänger-Studien
+//  (reports/detector_shootout/). Parameter wurden VOR dem Backtest deklariert;
+//  der Indikator wurde danach nicht auf die Ergebnisse getunt.
+//
+//  Regeln:
+//   Leg-out  : Body >= 60% der Range UND (Range >= 1.2 x ATR(14, Wilder)
+//              ODER Gap-Move von close[1] zum Extrem >= 1.5 x ATR)
+//   Base     : 1-4 Kerzen davor; Base-Kerze = Body <= 50% Range ODER
+//              Body <= 0.5 x ATR (Union beider bewährter Definitionen)
+//   Speed-Bump-Filter: 1-Kerzen-Base, die selbst stark & gleichfarbig ist -> raus
+//   Formation: DBR / RBR / RBD / DBD aus Prior-Move (8 Bars), sonst "?"
+//   Bounds   : Preferred = Base-BODY-Kante | Wider = Base-WICK-Kante;
+//              Distal enthält immer das Leg-out-Extrem
+//   LoL      : Zone überlappt/liegt <= 0.5 x ATR neben aktiver gleichger.
+//              Zone -> "LoL"-Tag. ACHTUNG Backtest: LoL-Zonen performten
+//              SCHLECHTER (PF 0.87 vs 1.00) — Anzeige ist Information,
+//              kein Qualitätsmerkmal!
+//   Status   : frisch (voll) -> berührt (grau) -> mitigiert (Close hinter
+//              Distal, ausgeblendet/faint)
+// =============================================================================
+indicator("SD Zones v5 — Synthesis", overlay = true, max_boxes_count = 500, max_labels_count = 500, max_lines_count = 500)
+
+// ── Inputs ───────────────────────────────────────────────────────────────────
+gZ = "Zonen-Definition"
+lineMode   = input.string("Preferred", "Zone Type", options = ["Preferred", "Wider"], group = gZ, tooltip = "Preferred = Proximal an den Kerzen-BODIES der Base (enger, besseres R:R). Wider = an den WICKS (mehr Fills). Distal ist in beiden Modi identisch (inkl. Leg-out-Extrem).")
+atrLen     = input.int(14, "ATR Länge (Wilder)", minval = 5, group = gZ)
+bodyFrac   = input.float(0.60, "Leg-out: min Body/Range", minval = 0.3, maxval = 0.9, step = 0.05, group = gZ)
+rangeAtr   = input.float(1.2, "Leg-out: min Range (x ATR)", minval = 0.5, step = 0.1, group = gZ)
+gapAtr     = input.float(1.5, "Leg-out: min Gap-Move (x ATR)", minval = 0.5, step = 0.1, group = gZ, tooltip = "Alternativ zum Range-Kriterium: Bewegung von close[1] zum Leg-out-Extrem (fängt Gaps).")
+baseBodyR  = input.float(0.5, "Base: max Body/Range", minval = 0.2, maxval = 0.8, step = 0.05, group = gZ)
+baseBodyA  = input.float(0.5, "Base: max Body (x ATR)", minval = 0.1, step = 0.1, group = gZ)
+maxBase    = input.int(4, "Max Base-Kerzen", minval = 1, maxval = 8, group = gZ, tooltip = "Daily-Evidenz: kurze Bases sind besser. Default 4.")
+priorLB    = input.int(8, "Prior-Move Lookback (Formation)", minval = 3, maxval = 20, group = gZ)
+
+gL = "LoL (Level on Level)"
+showLoL    = input.bool(true, "LoL anzeigen", group = gL)
+lolAtr     = input.float(0.5, "LoL: max Abstand (x ATR)", minval = 0.0, step = 0.25, group = gL, tooltip = "Zone gilt als LoL, wenn sie eine aktive gleichgerichtete Zone überlappt ODER ihr Abstand <= diesem ATR-Vielfachen ist.\n\nBACKTEST-HINWEIS: LoL-Zonen performten SCHLECHTER als normale Zonen (PF 0.87 vs 1.00, Daily, 40 Instrumente). Die Anzeige ist Information — kein Kaufargument.")
+
+gD = "Anzeige"
+maxZones   = input.int(60, "Max Zonen", minval = 10, maxval = 200, group = gD)
+showLabels = input.bool(true, "Labels anzeigen", group = gD)
+delOnClose = input.bool(true, "Zone entfernen bei Close hinter Distal", group = gD)
+demCol     = input.color(color.new(#089981, 78), "Demand", inline = "c", group = gD)
+supCol     = input.color(color.new(#F23645, 78), "Supply", inline = "c", group = gD)
+tchCol     = input.color(color.new(#787B86, 88), "Berührt", inline = "c", group = gD)
+
+// ── Detektion ────────────────────────────────────────────────────────────────
+atr   = ta.atr(atrLen)
+body  = math.abs(close - open)
+rng   = high - low
+bp    = rng > 0 ? body / rng : 0.0
+a1    = nz(atr[1], rng)
+
+bigRange = rng >= rangeAtr * a1
+upGap    = (high - close[1]) >= gapAtr * a1
+dnGap    = (close[1] - low) >= gapAtr * a1
+legOutBull = close > open and bp >= bodyFrac and (bigRange or upGap)
+legOutBear = close < open and bp >= bodyFrac and (bigRange or dnGap)
+
+// Base zählen (Union: Body<=50% Range ODER Body<=0.5xATR der Vorkerze)
+bCnt = 0
+float bHB = na
+float bLB = na
+float bHW = na
+float bLW = na
+if legOutBull or legOutBear
+    brk = false
+    for k = 1 to maxBase
+        if not brk
+            bj  = math.abs(close[k] - open[k])
+            rj  = high[k] - low[k]
+            aj  = nz(atr[k + 1], rj)
+            baseByRange = rj > 0 and bj <= baseBodyR * rj
+            baseByAtr   = aj > 0 and bj <= baseBodyA * aj
+            if baseByRange or baseByAtr
+                bHB := na(bHB) ? math.max(open[k], close[k]) : math.max(bHB, math.max(open[k], close[k]))
+                bLB := na(bLB) ? math.min(open[k], close[k]) : math.min(bLB, math.min(open[k], close[k]))
+                bHW := na(bHW) ? high[k] : math.max(bHW, high[k])
+                bLW := na(bLW) ? low[k] : math.min(bLW, low[k])
+                bCnt += 1
+            else
+                brk := true
+
+// Speed-Bump: 1-Kerzen-Base, selbst stark & gleichfarbig
+speedBump = false
+if bCnt == 1
+    b1  = math.abs(close[1] - open[1])
+    r1  = high[1] - low[1]
+    a2  = nz(atr[2], r1)
+    strong1  = a2 > 0 and b1 >= rangeAtr * a2 and (r1 > 0 ? b1 / r1 : 0) >= bodyFrac
+    sameDir1 = (close[1] > open[1]) == legOutBull
+    speedBump := strong1 and sameDir1
+
+// Prior-Move -> Formation
+f_prior() =>
+    si = 1 + math.max(bCnt, 1)
+    pB = false
+    pBr = false
+    for k = si to math.min(si + priorLB, 40)
+        bj = math.abs(close[k] - open[k])
+        rj = high[k] - low[k]
+        aj = nz(atr[k + 1], rj)
+        if aj > 0 and bj > aj * 0.5 and rj > 0 and bj / rj >= 0.4
+            if close[k] > open[k]
+                pB := true
+            else
+                pBr := true
+            break
+    if not pB and not pBr
+        nm = close[si] - close[math.min(si + priorLB, 40)]
+        if nm > a1 * 0.7
+            pB := true
+        else if nm < -a1 * 0.7
+            pBr := true
+    [pB, pBr]
+
+// ── Zonen-Arrays ─────────────────────────────────────────────────────────────
+var float[] zTop = array.new_float(0)
+var float[] zBot = array.new_float(0)
+var bool[]  zDem = array.new_bool(0)
+var bool[]  zFr  = array.new_bool(0)
+var int[]   zBar = array.new_int(0)
+var box[]   zBx  = array.new_box(0)
+var label[] zLb  = array.new_label(0)
+
+remZ(i) =>
+    box.delete(array.get(zBx, i))
+    label.delete(array.get(zLb, i))
+    array.remove(zTop, i), array.remove(zBot, i), array.remove(zDem, i)
+    array.remove(zFr, i),  array.remove(zBar, i)
+    array.remove(zBx, i),  array.remove(zLb, i)
+
+// ── Lifecycle: Touch / Mitigation ────────────────────────────────────────────
+if array.size(zTop) > 0
+    for i = array.size(zTop) - 1 to 0
+        zt = array.get(zTop, i)
+        zb = array.get(zBot, i)
+        dem = array.get(zDem, i)
+        bi = array.get(zBar, i)
+        if bar_index > bi
+            // Mitigation: Close hinter Distal
+            mitig = dem ? close < zb : close > zt
+            if mitig and delOnClose
+                remZ(i)
+                continue
+            // Touch: Preis erreicht Proximal-Kante
+            touched = dem ? low <= zt : high >= zb
+            if touched and array.get(zFr, i)
+                array.set(zFr, i, false)
+                box.set_bgcolor(array.get(zBx, i), tchCol)
+
+// ── Neue Zone (nur auf bestätigtem Bar) ──────────────────────────────────────
+if (legOutBull or legOutBear) and bCnt >= 1 and not speedBump and barstate.isconfirmed
+    [prB, prBr] = f_prior()
+    isDem = legOutBull
+    form = isDem ? (prBr ? "DBR" : prB ? "RBR" : "?") : (prB ? "RBD" : prBr ? "DBD" : "?")
+    proxSel = lineMode == "Preferred" ? (isDem ? bHB : bLB) : (isDem ? bHW : bLW)
+    zt = isDem ? proxSel : math.max(bHW, high)
+    zb = isDem ? math.min(bLW, low) : proxSel
+    if zt > zb
+        // LoL: aktive gleichgerichtete Zone überlappt oder liegt nahe
+        isLoL = false
+        if showLoL and array.size(zTop) > 0
+            for i = 0 to array.size(zTop) - 1
+                if array.get(zDem, i) == isDem
+                    eT = array.get(zTop, i)
+                    eB = array.get(zBot, i)
+                    overlap = zt >= eB and eT >= zb
+                    gapD = math.max(zb - eT, eB - zt)
+                    if overlap or (gapD >= 0 and gapD <= lolAtr * a1)
+                        isLoL := true
+                        break
+        stB = bar_index - math.max(bCnt, 1)
+        col = isDem ? demCol : supCol
+        bx = box.new(stB, zt, bar_index + 500, zb, border_color = color.new(color.gray, 60), border_width = 1, bgcolor = col, extend = extend.right)
+        txt = form + (isLoL ? " LoL" : "")
+        lb = label.new(na, na, "")
+        if showLabels
+            lb := label.new(bar_index + 15, (zt + zb) / 2, txt, style = label.style_none, textcolor = color.new(color.white, 25), size = size.small)
+            label.set_tooltip(lb, form + (isDem ? " Demand" : " Supply") + (isLoL ? "\nLoL: nahe/überlappende gleichgerichtete Zone.\nBacktest-Hinweis: LoL-Zonen performten SCHLECHTER (PF 0.87 vs 1.00) — Info, kein Qualitätsmerkmal." : ""))
+        array.push(zTop, zt), array.push(zBot, zb), array.push(zDem, isDem)
+        array.push(zFr, true), array.push(zBar, bar_index)
+        array.push(zBx, bx),  array.push(zLb, lb)
+        if array.size(zTop) > maxZones
+            remZ(0)
+
+alertcondition(legOutBull and bCnt >= 1 and not speedBump, "Neue Demand-Zone", "SD v5: neue Demand-Zone")
+alertcondition(legOutBear and bCnt >= 1 and not speedBump, "Neue Supply-Zone", "SD v5: neue Supply-Zone")
