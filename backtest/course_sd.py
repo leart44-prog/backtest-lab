@@ -223,6 +223,12 @@ def run_course_sd(
     stop_pct: float = 0.25,
     target_r: float = 2.5,
     max_zone_age: int = 500,
+    location_gate: bool = False,   # Bernd spec: long only low/very-low, short only high/very-high
+    trend_gate: bool = False,      # Bernd spec: daily pivot structure; counter-trend needs clean arrival
+    pm_gate: bool = False,         # Bernd spec: >=2R headroom to nearest opposing LTF zone
+    arrival_gate: bool = False,    # Bernd spec: clean impulsive approach to the zone
+    daily_trend: "np.ndarray | None" = None,
+    formations: tuple[int, ...] = (1, 2, 3, 4),
 ) -> list[dict]:
     meta = {m["name"]: m for m in load_manifest()}[name]
     cost = cost_for(name, meta.get("jpy", False), meta["type"], meta["category"],
@@ -244,9 +250,11 @@ def run_course_sd(
 
     # daily HTF zone activity intervals for coverage lookup
     #   active from creation until mitigated (close beyond distal on daily)
+    # populated whenever daily zones exist — needed by BOTH the coverage gate
+    # (use_htf) and the location gate (bugfix: was gated on use_htf only,
+    # leaving the location gate with an empty list)
     htf_active: list[tuple[int, int, CZone]] = []
-    if use_htf and daily_zones is not None and daily_index is not None:
-        dc = None  # daily closes needed for mitigation — recompute from index? caller passes zones already with lifespan
+    if daily_zones is not None and daily_index is not None:
         htf_active = [(z.created_i, getattr(z, "mit_i", 10**9), z) for z in daily_zones]
 
     def htf_covered(zone: CZone, ts: pd.Timestamp) -> bool:
@@ -269,6 +277,48 @@ def run_course_sd(
                 if zone.prox_p >= hz.prox_p and zone.distal <= hz.distal:
                     return True
         return False
+
+    def daily_pos(ts: pd.Timestamp, price: float):
+        """Location band from nearest ACTIVE daily zones (completed days only).
+        Returns fraction of the demand-distal..supply-distal span, or None."""
+        if daily_index is None or daily_zones is None:
+            return None
+        d_i = daily_index.searchsorted(ts.normalize()) - 1
+        dem_d, sup_d = None, None
+        for start_i, end_i, hz in htf_active:
+            if not (start_i < d_i < end_i):
+                continue
+            if hz.is_demand and hz.distal <= price:
+                if dem_d is None or hz.distal > dem_d:
+                    dem_d = hz.distal
+            elif (not hz.is_demand) and hz.distal >= price:
+                if sup_d is None or hz.distal < sup_d:
+                    sup_d = hz.distal
+        if dem_d is None or sup_d is None or sup_d <= dem_d:
+            return None
+        return (price - dem_d) / (sup_d - dem_d)
+
+    def arrival_clean(zone: CZone, i: int) -> bool:
+        """Objective arrival check: price came from >=0.75 zone-heights away
+        within <=8 bars, and no opposing zone formed during the approach."""
+        height = abs(zone.prox_p - zone.distal)
+        lo_k = max(0, i - 12)
+        window = c[lo_k:i]
+        if len(window) == 0:
+            return False
+        if zone.is_demand:
+            jrel = int(np.argmax(window))
+            far_enough = (window[jrel] - zone.prox_p) >= 0.75 * height
+        else:
+            jrel = int(np.argmin(window))
+            far_enough = (zone.prox_p - window[jrel]) >= 0.75 * height
+        jabs = lo_k + jrel
+        if not far_enough or (i - jabs) > 8:
+            return False
+        for zz in all_zones:
+            if zz.is_demand != zone.is_demand and jabs < zz.created_i < i:
+                return False
+        return True
 
     active: list[CZone] = []
     trades: list[dict] = []
@@ -341,6 +391,41 @@ def run_course_sd(
                     tradeable = False
             if tradeable and not htf_covered(z, idx[i - 1]):
                 tradeable = False
+            if tradeable and z.fcode not in formations:
+                tradeable = False
+            if tradeable and location_gate:
+                pos = daily_pos(idx[i - 1], float(c[i - 1]))
+                if pos is not None:
+                    if z.is_demand and not (pos < 0.33):
+                        tradeable = False
+                    if (not z.is_demand) and not (pos > 0.66):
+                        tradeable = False
+            if tradeable and trend_gate and daily_trend is not None and daily_index is not None:
+                d_i = daily_index.searchsorted(idx[i - 1].normalize()) - 1
+                tr = daily_trend[d_i] if 0 <= d_i < len(daily_trend) else 0
+                with_trend = (tr == 1 and z.is_demand) or (tr == -1 and not z.is_demand)
+                if not with_trend and tr != 0:
+                    # counter-trend only with clean arrival (Bernd rule 4/5.5)
+                    if not arrival_clean(z, i):
+                        tradeable = False
+            if tradeable and arrival_gate and not arrival_clean(z, i):
+                tradeable = False
+            if tradeable and pm_gate:
+                height = abs(z.prox_p - z.distal)
+                entry_est = z.prox_p
+                risk_est = height * (1.0 + stop_pct)
+                headroom = None
+                for z2 in active:
+                    if z2.is_demand == z.is_demand or mit_before.get(id(z2), z2.mitigated):
+                        continue
+                    if z.is_demand and z2.prox_p > entry_est:
+                        d2 = z2.prox_p - entry_est
+                        headroom = d2 if headroom is None else min(headroom, d2)
+                    elif (not z.is_demand) and z2.prox_p < entry_est:
+                        d2 = entry_est - z2.prox_p
+                        headroom = d2 if headroom is None else min(headroom, d2)
+                if headroom is not None and headroom < 2.0 * risk_est:
+                    tradeable = False
 
             take = tradeable and i > in_pos_until
 
@@ -410,3 +495,28 @@ def daily_zones_with_lifespan(df_daily: pd.DataFrame) -> list[CZone]:
                 break
         z.mit_i = end  # type: ignore[attr-defined]
     return zones
+
+
+def daily_pivot_trend(df_daily: pd.DataFrame, piv_len: int = 5) -> np.ndarray:
+    """Causal pivot-structure trend per daily bar (Bernd spec: 2 higher lows +
+    higher high = up; 2 lower highs + lower low = down; else sideways).
+    A pivot at bar p is only known at p + piv_len (confirmation)."""
+    h = df_daily["high"].to_numpy()
+    l = df_daily["low"].to_numpy()
+    n = len(df_daily)
+    trend = np.zeros(n, dtype=int)
+    hs: list[float] = []
+    ls: list[float] = []
+    for i in range(n):
+        p = i - piv_len
+        if p >= piv_len:
+            if h[p] == max(h[p - piv_len:p + piv_len + 1]):
+                hs.append(h[p])
+            if l[p] == min(l[p - piv_len:p + piv_len + 1]):
+                ls.append(l[p])
+        up = (len(ls) >= 3 and len(hs) >= 2 and ls[-1] > ls[-2] > ls[-3]
+              and hs[-1] > hs[-2])
+        dn = (len(hs) >= 3 and len(ls) >= 2 and hs[-1] < hs[-2] < hs[-3]
+              and ls[-1] < ls[-2])
+        trend[i] = 1 if up else (-1 if dn else 0)
+    return trend

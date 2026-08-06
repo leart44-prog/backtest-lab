@@ -1,0 +1,80 @@
+// =============================================================================
+//  PATCH v2 für "Supply & Demand — Course Method"  (evidenzbasiert)
+//  Basis: Backtest-Serie D0–D6 (reports/course_sd/bernd_gates_report.md)
+//  Änderungen gegenüber v1 — als Diff-Module, in bestehenden Code einfügen:
+//    [M1] NEU  Arrival-Qualifier (stärkste gemessene Komponente, +0.17 R)
+//    [M2] MOD  Location: Equilibrium hart ausschliessen (+0.04 R)
+//    [M3] MOD  Coverage: Gewicht 0 (nur Anzeige) — gemessen negativ
+//    [M4] MOD  Formations-Gewichtung: DBD abwerten, Reversals aufwerten
+//  Namensgebung des Originals beibehalten.
+// =============================================================================
+
+// ── [M1] INPUTS ergänzen (Gruppe gQ) ─────────────────────────────────────────
+arrivalBars   = input.int(8,  "Arrival: max Bars vom Swing zur Zone", minval = 2, group = gQ, tooltip = "Sauberer Rücklauf: Preis muss innerhalb dieser Bar-Anzahl vom Zwischen-Extrem zur Proximal-Linie gelangen. Backtest: stärkster Einzel-Qualifier.")
+arrivalDist   = input.float(0.75, "Arrival: min Distanz (x Zonenhöhe)", minval = 0.25, step = 0.25, group = gQ, tooltip = "Das Zwischen-Extrem muss mindestens so viele Zonenhöhen von der Proximal-Linie entfernt liegen — sonst ist der Rücklauf kein echter Rücklauf.")
+covWeight     = input.int(0,  "Coverage-Gewicht im Score (Backtest: 0!)", minval = 0, maxval = 2, group = gQ, tooltip = "Big-Brother-Coverage verschlechterte im ehrlichen Backtest die Ergebnisse (PF 0.78 vs 0.81). Default neu 0 = nur Anzeige (★), kein Score-Beitrag. Auf eigenes Risiko erhöhen.")
+eqHardBlock   = input.bool(true, "Equilibrium hart ausschliessen", group = gT, tooltip = "Bernd-Regel, im Backtest bestätigt (+0.04 R): im mittleren Drittel der HTF-Spanne keine Signale — auch nicht mit Trend-Tiebreak.")
+
+// ── [M1] FUNKTION Arrival-Check (nach f_trend() einfügen) ────────────────────
+// Sauberer Rücklauf zur Zone: Preis kam von >= arrivalDist Zonenhöhen
+// innerhalb <= arrivalBars, ohne neue Gegenzone auf dem Weg.
+f_arrivalClean(bool isDem, float proxSel, float hgt) =>
+    ok = false
+    if hgt > 0
+        extRel = 0
+        extVal = isDem ? -1e10 : 1e10
+        for k = 1 to 12
+            v = isDem ? close[k] : close[k]
+            if isDem and v > extVal
+                extVal := v
+                extRel := k
+            if not isDem and v < extVal
+                extVal := v
+                extRel := k
+        farEnough = isDem ? (extVal - proxSel) >= arrivalDist * hgt : (proxSel - extVal) >= arrivalDist * hgt
+        fastEnough = extRel <= arrivalBars
+        // Gegenzone auf dem Weg? (Neue Zone in den letzten extRel Bars mit
+        // entgegengesetzter Richtung — nutzt das vorhandene zones-Array)
+        blocked = false
+        nZ = array.size(zones)
+        if nZ > 0
+            for zi = 0 to nZ - 1
+                zz = array.get(zones, zi)
+                if zz.isDemand != isDem and (bar_index - zz.createdBar) < extRel
+                    blocked := true
+        ok := farEnough and fastEnough and not blocked
+    ok
+
+// ── [M2] LOCATION-GATE ersetzen (im UPDATE-Block, Zeile "locOK := ...") ──────
+// ALT:  locOK := z.isDemand ? (band == "LOW" or (band == "EQ" and trendCtx == 1))
+//                           : (band == "HIGH" or (band == "EQ" and trendCtx == -1))
+// NEU:
+//            locOK := eqHardBlock
+//                 ? (z.isDemand ? band == "LOW" : band == "HIGH")
+//                 : (z.isDemand ? (band == "LOW" or (band == "EQ" and trendCtx == 1))
+//                               : (band == "HIGH" or (band == "EQ" and trendCtx == -1)))
+
+// ── [M1+M3+M4] SCORE-ZEILE ersetzen (im UPDATE-Block) ────────────────────────
+// ALT:  total = z.dep + z.baseSc + freshSc + pmSc + (z.covered ? 2 : 0) + (z.flip ? 1 : 0)
+// NEU:
+//            hgtQ = z.isDemand ? (z.proxP - z.distal) : (z.distal - z.proxP)
+//            arrOK = f_arrivalClean(z.isDemand, proxSel, hgtQ)
+//            arrSc = arrOK ? 2 : 0
+//            formAdj = z.fcode == 4 ? -1 : (z.fcode == 2 or z.fcode == 3 ? 1 : 0)
+//            total = z.dep + z.baseSc + freshSc + pmSc + arrSc + formAdj
+//                  + (z.covered ? covWeight : 0) + (z.flip ? 1 : 0)
+
+// ── [M1] TRADEABILITY ergänzen (Zeile "tradeable = ...") ─────────────────────
+// ALT:  tradeable = (not z.mitigated) and pmSc >= 1 and z.dep >= 1 and locOK and (not requireCov or z.covered)
+// NEU (Arrival als hartes Kriterium — stärkster gemessener Filter):
+//            tradeable = (not z.mitigated) and pmSc >= 1 and z.dep >= 1 and locOK
+//                 and arrOK and (not requireCov or z.covered)
+
+// =============================================================================
+//  ERWARTUNGSMANAGEMENT (aus dem Backtest, ehrliche Fills, 40 Instrumente,
+//  4H, 2013–2026): Selbst mit allen Verbesserungen erreichte die beste
+//  Kombination PF ~1.1 bei Einzel-Gates (n=54) bzw. PF ~2.2 nur noch bei
+//  n=21 Trades in 13 Jahren. Die Verbesserungen machen die Zonen MESSBAR
+//  besser — sie machen die Strategie damit noch nicht nachweislich
+//  profitabel. Frequenz sinkt weit unter 2–3 Trades/Woche.
+// =============================================================================
