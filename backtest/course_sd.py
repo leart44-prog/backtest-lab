@@ -231,11 +231,12 @@ def run_course_sd(
     daily_trend: "np.ndarray | None" = None,
     formations: tuple[int, ...] = (1, 2, 3, 4),
     zone_scanner=None,
+    frictionless: bool = False,    # diagnostic: zero spread/slippage/commission
 ) -> list[dict]:
     meta = {m["name"]: m for m in load_manifest()}[name]
     cost = cost_for(name, meta.get("jpy", False), meta["type"], meta["category"],
                     meta.get("tick"))
-    friction = cost.spread_price + cost.slippage_price
+    friction = 0.0 if frictionless else (cost.spread_price + cost.slippage_price)
 
     o = df["open"].to_numpy()
     h = df["high"].to_numpy()
@@ -446,7 +447,7 @@ def run_course_sd(
                 continue
             tp = entry + (target_r * risk if z.is_demand else -target_r * risk)
 
-            comm_r = 2.0 * cost.commission_pct * entry / risk
+            comm_r = 0.0 if frictionless else (2.0 * cost.commission_pct * entry / risk)
 
             # same-bar violation (touch bar reaches SL) = -1R
             violated = (l[i] <= sl_level) if z.is_demand else (h[i] >= sl_level)
