@@ -1,0 +1,431 @@
+//@version=5
+// =============================================================================
+//  Supply & Demand — Course Method v2  (RBR / DBR / RBD / DBD)
+//  v2 = evidenzbasierter Umbau nach Backtest-Serie D0–D6
+//  (reports/course_sd/bernd_gates_report.md, 40 Instrumente, 4H, 2013–2026):
+//    [M1] NEU  Arrival-Qualifier — stärkste gemessene Komponente (+0.17 R);
+//              zählt 0/2 im Score UND ist hartes Tradeability-Kriterium.
+//    [M2] MOD  Location: Equilibrium hart ausschliessbar (Default AN, +0.04 R).
+//    [M3] MOD  Big-Brother-Coverage: Score-Gewicht als Input, Default 0 —
+//              im ehrlichen Backtest verschlechterte Coverage die Ergebnisse
+//              (PF 0.78 vs 0.81). ★-Anzeige bleibt erhalten.
+//    [M4] MOD  Formations-Gewichtung: DBD −1 (konsistent schlechteste
+//              Formation), Reversals DBR/RBD +1.
+//  Alle übrigen Regeln, Namen und Semantik unverändert zur v1.
+// =============================================================================
+indicator("Supply & Demand — Course Method v2", overlay = true, max_boxes_count = 500, max_lines_count = 500, max_labels_count = 500, max_bars_back = 500)
+
+// ---------------------------------------------------------------- INPUTS -----
+gD = "Detection (candles & formation)"
+avgLen        = input.int(10,  "Avg range lookback (size baseline)", minval = 3, group = gD)
+sizeFactor    = input.float(1.5, "Explosive/abnormal size factor (x avg range)", minval = 1.0, step = 0.1, group = gD)
+maxBase       = input.int(6,   "Max base candles (>6 rejects the zone)", minval = 1, maxval = 20, group = gD)
+filterSpeedB  = input.bool(true, "Filter speed-bumps (1-candle RBR/DBD mid-momentum)", group = gD)
+
+gL = "Zone lines"
+lineMode      = input.string("Preferred", "Proximal line", options = ["Preferred", "Wider"], group = gL)
+rightPad      = input.int(3,   "Extend active zones (bars past current)", minval = 0, group = gL)
+
+gQ = "Qualifiers / filtering"
+freshMin      = input.int(1,   "Min freshness to trade (2=untouched, 1=wider-touch ok)", minval = 0, maxval = 2, group = gQ)
+minScoreShow  = input.int(0,   "Hide zones below total score", minval = 0, maxval = 14, group = gQ)
+// [M1] Arrival-Qualifier — im Backtest die staerkste Einzelkomponente
+arrivalBars   = input.int(8,   "Arrival: max Bars vom Swing zur Zone", minval = 2, maxval = 12, group = gQ, tooltip = "Sauberer Ruecklauf: das Zwischen-Extrem (hoechster/tiefster Close der letzten 12 Bars) muss max. so viele Bars zurueckliegen. Backtest: staerkster Einzel-Qualifier (+0.17 R, einziges positiv messbares Gate).")
+arrivalDist   = input.float(0.75, "Arrival: min Distanz (x Zonenhoehe)", minval = 0.25, step = 0.25, group = gQ, tooltip = "Das Zwischen-Extrem muss mind. so viele Zonenhoehen von der Proximal-Linie entfernt sein — sonst war der 'Ruecklauf' nur Seitwaertsgeschiebe.")
+arrivalHard   = input.bool(true, "Arrival als hartes Kriterium (empfohlen)", group = gQ, tooltip = "AN: nicht-sauberer Ruecklauf macht die Zone nicht handelbar (Backtest-Empfehlung). AUS: Arrival zaehlt nur im Score.")
+// [M3] Coverage-Gewicht — Backtest: 0
+covWeight     = input.int(0,   "Coverage-Gewicht im Score (Backtest: 0!)", minval = 0, maxval = 2, group = gQ, tooltip = "Big-Brother-Coverage VERSCHLECHTERTE im ehrlichen Backtest die Ergebnisse (PF 0.78 vs 0.81, nach Lookahead-Fix). Default 0 = nur ★-Anzeige, kein Score-Beitrag. Auf eigenes Risiko erhoehen.")
+
+gT = "HTF location & trend (Action Matrix)"
+htfTF         = input.timeframe("", "Higher timeframe (blank = chart TF)", group = gT)
+pivLen        = input.int(5,   "Pivot length (trend zigzag)", minval = 2, group = gT)
+requireCov    = input.bool(false, "Only show zones covered by HTF (big/small brother)", group = gT, tooltip = "ACHTUNG Backtest-Befund: Coverage als Filter verschlechterte die Ergebnisse. Option bleibt fuer eigene Tests erhalten, Empfehlung: AUS.")
+// [M2] Equilibrium hart ausschliessen
+eqHardBlock   = input.bool(true, "Equilibrium hart ausschliessen", group = gT, tooltip = "AN (Empfehlung, +0.04 R): im mittleren Drittel der HTF-Spanne keine Signale — auch nicht mit Trend-Tiebreak. AUS: v1-Verhalten (EQ mit Trendrichtung erlaubt).")
+
+gP = "Trade plan (entry / stop / target)"
+showPlan      = input.bool(true, "Draw entry / stop / target for tradeable zones", group = gP)
+stopPct       = input.float(33.33, "Stop = % of zone beyond distal", minval = 1, maxval = 200, step = 0.01, group = gP)
+targetR       = input.float(3.0, "Target (R multiple)", minval = 1, step = 0.5, group = gP)
+planExtend    = input.int(25,  "Trade-plan line length (bars)", minval = 5, group = gP)
+
+gS = "Style"
+colDemand     = input.color(color.new(color.teal, 0),  "Demand color", group = gS)
+colSupply     = input.color(color.new(color.red, 0),   "Supply color",  group = gS)
+zoneTransp    = input.int(80,  "Zone fill transparency", minval = 0, maxval = 100, group = gS)
+faintTransp   = input.int(93,  "Mitigated/faint transparency", minval = 0, maxval = 100, group = gS)
+showLabels    = input.bool(true, "Show zone labels", group = gS)
+showTable     = input.bool(true, "Show status table", group = gS)
+maxZones      = input.int(60,  "Max zones kept", minval = 5, maxval = 200, group = gS)
+
+// ------------------------------------------------------- CORE DETECTION ------
+f_scan() =>
+    avgR = ta.sma(high - low, avgLen)
+    r0  = high - low
+    b0  = math.abs(close - open)
+    bp0 = r0 > 0 ? b0 / r0 : 0.0
+    a1  = nz(avgR[1], r0)
+    big0  = r0 >= sizeFactor * a1
+    expl0 = bp0 > 0.70 and big0
+    dec0  = bp0 > 0.50 and not (r0 < 0.5 * a1)
+    upMove = high - close[1]
+    dnMove = close[1] - low
+    bigUp = upMove >= sizeFactor * a1
+    bigDn = dnMove >= sizeFactor * a1
+    legOutBull = close > open and (expl0 or (dec0 and big0) or bigUp)
+    legOutBear = close < open and (expl0 or (dec0 and big0) or bigDn)
+    bLen = 0
+    broken = false
+    for k = 1 to maxBase
+        if not broken
+            rk  = high[k] - low[k]
+            bk  = math.abs(close[k] - open[k])
+            bpk = rk > 0 ? bk / rk : 0.0
+            smallk = rk < 0.5 * nz(avgR[k + 1], rk)
+            indk = bpk <= 0.50 or smallk
+            if indk
+                bLen := k
+            else
+                broken := true
+    formed = false
+    isDem  = false
+    pw     = 0.0
+    pp     = 0.0
+    dd     = 0.0
+    fcode  = 0
+    dep    = 0
+    bsc    = 0
+    if (legOutBull or legOutBear) and bLen >= 1
+        li   = bLen + 1
+        rli  = high[li] - low[li]
+        bli  = math.abs(close[li] - open[li])
+        bpli = rli > 0 ? bli / rli : 0.0
+        bigli = rli >= sizeFactor * nz(avgR[li + 1], rli)
+        decli = bpli > 0.50 and not (rli < 0.5 * nz(avgR[li + 1], rli))
+        explLi = bpli > 0.70 and bigli
+        if decli or explLi
+            legInBull = close[li] > open[li]
+            isDem := legOutBull
+            bHigh   = high[1]
+            bLow    = low[1]
+            bBodyHi = math.max(open[1], close[1])
+            bBodyLo = math.min(open[1], close[1])
+            for k = 2 to maxBase
+                if k <= bLen
+                    bHigh   := math.max(bHigh, high[k])
+                    bLow    := math.min(bLow, low[k])
+                    bBodyHi := math.max(bBodyHi, math.max(open[k], close[k]))
+                    bBodyLo := math.min(bBodyLo, math.min(open[k], close[k]))
+            sameDir = legInBull == legOutBull
+            if isDem
+                pw := bHigh
+                pp := bBodyHi
+                dd := math.min(bLow, low[0])
+            else
+                pw := bLow
+                pp := bBodyLo
+                dd := math.max(bHigh, high[0])
+            fcode := isDem ? (legInBull ? 1 : 2) : (legInBull ? 3 : 4)
+            depBig = (dec0 and big0) or (isDem ? bigUp : bigDn)
+            dep := expl0 ? 2 : (depBig ? 1 : 0)
+            bsc := (bLen >= 2 and bLen <= 4) ? 2 : 1
+            speedBump = filterSpeedB and bLen == 1 and sameDir and (explLi or (decli and bigli))
+            formed := dep >= 1 and not speedBump
+    [formed, isDem, pw, pp, dd, fcode, dep, bsc, bLen]
+
+// ---------------------------------------- HTF NEAREST FRESH S/D BOUNDS -----
+htfBounds() =>
+    [f, isDem, pw, pp, dd, fc, dp, bs, bl] = f_scan()
+    var array<float> dPa = array.new<float>()
+    var array<float> dDa = array.new<float>()
+    var array<float> sPa = array.new<float>()
+    var array<float> sDa = array.new<float>()
+    if f
+        if isDem
+            array.push(dPa, pp)
+            array.push(dDa, dd)
+        else
+            array.push(sPa, pp)
+            array.push(sDa, dd)
+    if array.size(dDa) > 0
+        for i = array.size(dDa) - 1 to 0
+            if close < array.get(dDa, i)
+                array.remove(dDa, i)
+                array.remove(dPa, i)
+    if array.size(sDa) > 0
+        for i = array.size(sDa) - 1 to 0
+            if close > array.get(sDa, i)
+                array.remove(sDa, i)
+                array.remove(sPa, i)
+    while array.size(dPa) > 50
+        array.shift(dPa)
+        array.shift(dDa)
+    while array.size(sPa) > 50
+        array.shift(sPa)
+        array.shift(sDa)
+    float ndP = na
+    float ndD = na
+    if array.size(dPa) > 0
+        for i = 0 to array.size(dPa) - 1
+            pr = array.get(dPa, i)
+            di = array.get(dDa, i)
+            if di <= close and (na(ndP) or pr > ndP)
+                ndP := pr
+                ndD := di
+    float nsP = na
+    float nsD = na
+    if array.size(sPa) > 0
+        for i = 0 to array.size(sPa) - 1
+            pr = array.get(sPa, i)
+            di = array.get(sDa, i)
+            if di >= close and (na(nsP) or pr < nsP)
+                nsP := pr
+                nsD := di
+    [ndP, ndD, nsP, nsD]
+
+// ------------------------------------------------------------- TREND ---------
+f_trend() =>
+    ph = ta.pivothigh(pivLen, pivLen)
+    pl = ta.pivotlow(pivLen, pivLen)
+    var float h1 = na
+    var float h2 = na
+    var float h3 = na
+    var float l1 = na
+    var float l2 = na
+    var float l3 = na
+    if not na(ph)
+        h3 := h2
+        h2 := h1
+        h1 := ph
+    if not na(pl)
+        l3 := l2
+        l2 := l1
+        l1 := pl
+    up = not na(l1) and not na(l2) and not na(l3) and not na(h1) and not na(h2) and l1 > l2 and l2 > l3 and h1 > h2
+    dn = not na(h1) and not na(h2) and not na(h3) and not na(l1) and not na(l2) and h1 < h2 and h2 < h3 and l1 < l2
+    up ? 1 : dn ? -1 : 0
+
+// ------------------------------------------------- CONTEXT (HTF via security)
+useHTF = htfTF != ""
+locTF  = htfTF == "" ? timeframe.period : htfTF
+[htfDemP, htfDemD, htfSupP, htfSupD] = request.security(syminfo.tickerid, locTF, htfBounds(), lookahead = barmerge.lookahead_off)
+trendCtx = request.security(syminfo.tickerid, locTF, f_trend(), lookahead = barmerge.lookahead_off)
+
+f_band(float p) =>
+    res = "NA"
+    if not na(htfDemD) and not na(htfSupD) and htfSupD > htfDemD
+        span = htfSupD - htfDemD
+        lowB = htfDemD + span / 3.0
+        highB = htfSupD - span / 3.0
+        res := p <= lowB ? "LOW" : (p >= highB ? "HIGH" : "EQ")
+    res
+
+// ------------------------------------------------------------- ZONE TYPE -----
+type Zone
+    bool   isDemand
+    int    fcode
+    float  proxW
+    float  proxP
+    float  distal
+    int    leftBar
+    int    createdBar
+    bool   touchedW
+    bool   touchedP
+    bool   mitigated
+    float  peak
+    float  pm
+    int    dep
+    int    baseSc
+    bool   covered
+    bool   flip
+    box    bx
+    label  lb
+    line   eLn
+    line   sLn
+    line   tLn
+    bool   hasPlan
+
+var array<Zone> zones = array.new<Zone>()
+
+// ---------------------------------------------- [M1] ARRIVAL QUALIFIER ------
+// Sauberer Ruecklauf: das relevante Zwischen-Extrem (hoechster Close fuer
+// Demand / tiefster Close fuer Supply, letzte 12 Bars) liegt >= arrivalDist
+// Zonenhoehen von der Proximal-Linie entfernt, ist <= arrivalBars alt, und
+// auf dem Weg zur Zone ist KEINE Gegenzone entstanden.
+f_arrivalClean(bool isDem, float proxSel, float hgt) =>
+    ok = false
+    if hgt > 0 and bar_index > 12
+        extRel = 1
+        extVal = close[1]
+        for k = 2 to 12
+            v = close[k]
+            if (isDem and v > extVal) or (not isDem and v < extVal)
+                extVal := v
+                extRel := k
+        farEnough = isDem ? (extVal - proxSel) >= arrivalDist * hgt : (proxSel - extVal) >= arrivalDist * hgt
+        fastEnough = extRel <= arrivalBars
+        blocked = false
+        nZq = array.size(zones)
+        if nZq > 0
+            for zi = 0 to nZq - 1
+                zq = array.get(zones, zi)
+                if zq.isDemand != isDem and (bar_index - zq.createdBar) < extRel
+                    blocked := true
+        ok := farEnough and fastEnough and not blocked
+    ok
+
+// ------------------------------------------------------- DETECT & CREATE -----
+[formed, isDem, pw, pp, dd, fcode, dep, bsc, bLen] = f_scan()
+
+if formed and barstate.isconfirmed and bar_index > maxBase + 2
+    leftB  = bar_index - bLen
+    baseCol = isDem ? colDemand : colSupply
+    proxSel = lineMode == "Preferred" ? pp : pw
+    topP = isDem ? proxSel : dd
+    botP = isDem ? dd : proxSel
+    cov = false
+    if useHTF
+        cov := isDem ? (not na(htfDemP) and not na(htfDemD) and proxSel <= htfDemP and dd >= htfDemD) : (not na(htfSupP) and not na(htfSupD) and proxSel >= htfSupP and dd <= htfSupD)
+    fl = false
+    nZ = array.size(zones)
+    if nZ > 0
+        for i = 0 to nZ - 1
+            zz = array.get(zones, i)
+            if zz.isDemand != isDem and zz.mitigated
+                lo1 = math.min(topP, botP)
+                hi1 = math.max(topP, botP)
+                lo2 = math.min(zz.proxP, zz.distal)
+                hi2 = math.max(zz.proxP, zz.distal)
+                if hi1 >= lo2 and hi2 >= lo1
+                    fl := true
+    bxId = box.new(leftB, topP, bar_index + rightPad, botP, border_color = baseCol, border_width = 1, bgcolor = color.new(baseCol, zoneTransp))
+    lbId = showLabels ? label.new(leftB, topP, "", style = isDem ? label.style_label_up : label.style_label_down, color = color.new(baseCol, 20), textcolor = color.white, size = size.small) : na
+    newZone = Zone.new(isDem, fcode, pw, pp, dd, leftB, bar_index, false, false, false, isDem ? high : low, 0.0, dep, bsc, cov, fl, bxId, lbId, na, na, na, false)
+    array.push(zones, newZone)
+    if array.size(zones) > maxZones
+        old = array.shift(zones)
+        box.delete(old.bx)
+        if not na(old.lb)
+            label.delete(old.lb)
+        if not na(old.eLn)
+            line.delete(old.eLn)
+        if not na(old.sLn)
+            line.delete(old.sLn)
+        if not na(old.tLn)
+            line.delete(old.tLn)
+
+// --------------------------------------------------- UPDATE ACTIVE ZONES -----
+f_formStr(int c) => c == 1 ? "RBR" : c == 2 ? "DBR" : c == 3 ? "RBD" : "DBD"
+
+nAll = array.size(zones)
+if nAll > 0
+    for i = 0 to nAll - 1
+        z = array.get(zones, i)
+        proxSel = lineMode == "Preferred" ? z.proxP : z.proxW
+        if not z.mitigated
+            box.set_right(z.bx, bar_index + rightPad)
+            if bar_index > z.createdBar
+                if z.isDemand
+                    if low <= z.proxW
+                        z.touchedW := true
+                    if low <= z.proxP
+                        z.touchedP := true
+                    if not z.touchedP
+                        z.peak := math.max(z.peak, high)
+                    if close < z.distal
+                        z.mitigated := true
+                else
+                    if high >= z.proxW
+                        z.touchedW := true
+                    if high >= z.proxP
+                        z.touchedP := true
+                    if not z.touchedP
+                        z.peak := math.min(z.peak, low)
+                    if close > z.distal
+                        z.mitigated := true
+            hgt = z.isDemand ? (z.proxP - z.distal) : (z.distal - z.proxP)
+            trav = z.isDemand ? (z.peak - z.proxP) : (z.proxP - z.peak)
+            z.pm := hgt > 0 ? trav / hgt : 0.0
+            freshSc = z.touchedP ? 0 : (z.touchedW ? 1 : 2)
+            if freshSc < freshMin
+                z.mitigated := true
+            pmSc = z.pm >= 5 ? 2 : (z.pm >= 3 ? 1 : 0)
+            band = f_band(proxSel)
+            // [M2] Equilibrium hart ausschliessen (Default AN)
+            locOK = true
+            if band != "NA"
+                locOK := eqHardBlock ? (z.isDemand ? band == "LOW" : band == "HIGH") : (z.isDemand ? (band == "LOW" or (band == "EQ" and trendCtx == 1)) : (band == "HIGH" or (band == "EQ" and trendCtx == -1)))
+            // [M1] Arrival
+            arrOK = f_arrivalClean(z.isDemand, proxSel, hgt)
+            arrSc = arrOK ? 2 : 0
+            // [M4] Formations-Gewichtung (Backtest: DBD konsistent schlechteste,
+            // Reversals DBR/RBD beste Formationen)
+            formAdj = z.fcode == 4 ? -1 : (z.fcode == 2 or z.fcode == 3 ? 1 : 0)
+            // [M3] Coverage nur noch mit covWeight (Default 0)
+            total = z.dep + z.baseSc + freshSc + pmSc + arrSc + formAdj + (z.covered ? covWeight : 0) + (z.flip ? 1 : 0)
+            tradeable = (not z.mitigated) and pmSc >= 1 and z.dep >= 1 and locOK and (not arrivalHard or arrOK) and (not requireCov or z.covered)
+            hideZone = total < minScoreShow or (requireCov and useHTF and not z.covered)
+            transpNow = hideZone ? 100 : zoneTransp
+            box.set_bgcolor(z.bx, color.new(z.isDemand ? colDemand : colSupply, transpNow))
+            box.set_border_color(z.bx, hideZone ? color.new(color.gray, 100) : color.new(z.isDemand ? colDemand : colSupply, 0))
+            if not na(z.lb)
+                tags = (z.covered ? "★" : "") + (z.flip ? "⚑" : "") + (arrOK ? "»" : "") + (tradeable ? " ✔" : "")
+                label.set_text(z.lb, f_formStr(z.fcode) + " " + str.tostring(total) + tags)
+                label.set_textcolor(z.lb, tradeable ? color.white : color.new(color.white, 40))
+                formLong = z.fcode == 1 ? "Rally-Base-Rally (continuation demand)" : z.fcode == 2 ? "Drop-Base-Rally (reversal demand)" : z.fcode == 3 ? "Rally-Base-Drop (reversal supply)" : "Drop-Base-Drop (continuation supply)"
+                freshTxt = freshSc == 2 ? "untouched (fresh on the wider line)" : freshSc == 1 ? "wider line touched, preferred still clean" : "preferred line touched"
+                reason = (pmSc < 1 ? "profit margin < 3R; " : "") + ((band != "NA" and not locOK) ? "wrong location; " : "") + ((arrivalHard and not arrOK) ? "arrival nicht sauber; " : "") + ((requireCov and not z.covered) ? "no HTF coverage; " : "")
+                statusTxt = z.mitigated ? "MITIGATED" : tradeable ? "TRADEABLE now — entry at proximal, stop " + str.tostring(stopPct, "#.#") + "% beyond distal, target " + str.tostring(targetR) + "R" : "not tradeable now: " + (reason == "" ? "waiting on location/price" : reason)
+                pmR = str.tostring(math.round(z.pm * 10) / 10)
+                label.set_tooltip(z.lb, f_formStr(z.fcode) + " " + (z.isDemand ? "demand" : "supply") + " — total score " + str.tostring(total) + "\n" + formLong + "\n\nSCORE BREAKDOWN (v2)\n• Departure: " + str.tostring(z.dep) + "/2\n• Base duration: " + str.tostring(z.baseSc) + "/2\n• Freshness: " + str.tostring(freshSc) + "/2 — " + freshTxt + "\n• Profit margin: " + str.tostring(pmSc) + "/2 (" + pmR + "R to peak)\n• Arrival (NEU, staerkster Qualifier): " + str.tostring(arrSc) + "/2\n• Formation (DBD −1, Reversal +1): " + (formAdj >= 0 ? "+" : "") + str.tostring(formAdj) + "\n• Coverage (Backtest-Gewicht 0): " + (z.covered ? "+" + str.tostring(covWeight) : "0") + "\n• Flip: " + (z.flip ? "+1" : "0") + "\n\nSYMBOLS\n★ HTF coverage (nur Anzeige)\n⚑ flip zone\n» arrival sauber\n✔ tradeable\n\nSTATUS\n" + statusTxt)
+                if hideZone
+                    label.set_text(z.lb, "")
+                    label.set_color(z.lb, color.new(color.gray, 100))
+                    label.set_tooltip(z.lb, "")
+                else
+                    label.set_color(z.lb, color.new(z.isDemand ? colDemand : colSupply, 20))
+            if showPlan and tradeable and not hideZone and not z.hasPlan
+                entry = proxSel
+                sl = z.isDemand ? (z.distal - stopPct / 100.0 * (proxSel - z.distal)) : (z.distal + stopPct / 100.0 * (z.distal - proxSel))
+                risk = math.abs(entry - sl)
+                tp = z.isDemand ? (entry + targetR * risk) : (entry - targetR * risk)
+                z.eLn := line.new(bar_index, entry, bar_index + planExtend, entry, color = color.blue, width = 2)
+                z.sLn := line.new(bar_index, sl, bar_index + planExtend, sl, color = color.red, style = line.style_dashed)
+                z.tLn := line.new(bar_index, tp, bar_index + planExtend, tp, color = color.green, style = line.style_dashed)
+                z.hasPlan := true
+            else if z.hasPlan and (not tradeable or hideZone)
+                if not na(z.eLn)
+                    line.delete(z.eLn)
+                    z.eLn := na
+                if not na(z.sLn)
+                    line.delete(z.sLn)
+                    z.sLn := na
+                if not na(z.tLn)
+                    line.delete(z.tLn)
+                    z.tLn := na
+                z.hasPlan := false
+            if z.mitigated and not hideZone
+                box.set_bgcolor(z.bx, color.new(z.isDemand ? colDemand : colSupply, faintTransp))
+                box.set_border_color(z.bx, color.new(color.gray, 40))
+
+// -------------------------------------------------------------- TABLE --------
+var table tb = na
+if showTable and barstate.islast
+    if na(tb)
+        tb := table.new(position.top_right, 2, 4, border_width = 1)
+    trStr = trendCtx == 1 ? "UP" : trendCtx == -1 ? "DOWN" : "SIDEWAYS"
+    trCol = trendCtx == 1 ? color.teal : trendCtx == -1 ? color.red : color.gray
+    curBand = f_band(close)
+    bandStr = curBand == "NA" ? "n/a" : curBand == "LOW" ? "CHEAP" : curBand == "HIGH" ? "EXPENSIVE" : "EQUILIBRIUM (blocked)"
+    table.cell(tb, 0, 0, "HTF Trend", text_color = color.white, bgcolor = color.new(color.black, 20))
+    table.cell(tb, 1, 0, trStr, text_color = color.white, bgcolor = color.new(trCol, 30))
+    table.cell(tb, 0, 1, "Location", text_color = color.white, bgcolor = color.new(color.black, 20))
+    table.cell(tb, 1, 1, bandStr, text_color = color.white, bgcolor = color.new(color.black, 40))
+    table.cell(tb, 0, 2, "Context TF", text_color = color.white, bgcolor = color.new(color.black, 20))
+    table.cell(tb, 1, 2, useHTF ? htfTF : "chart", text_color = color.white, bgcolor = color.new(color.black, 40))
+    table.cell(tb, 0, 3, "Zones", text_color = color.white, bgcolor = color.new(color.black, 20))
+    table.cell(tb, 1, 3, str.tostring(array.size(zones)), text_color = color.white, bgcolor = color.new(color.black, 40))
+
+// ------------------------------------------------------------- ALERTS --------
+alertcondition(formed and barstate.isconfirmed and isDem, "New demand zone", "A new demand zone (RBR/DBR) formed")
+alertcondition(formed and barstate.isconfirmed and not isDem, "New supply zone", "A new supply zone (RBD/DBD) formed")
