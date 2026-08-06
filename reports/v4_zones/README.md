@@ -58,3 +58,41 @@ nicht auf einen anderen Zonen-Detektor und ist damit fragiler als bisher
 kommuniziert. Was detektor-übergreifend stabil bleibt: DBR/Reversal >
 Continuation unter Valuation-Bedingungen, und RBR+undervalued als
 schlechteste Kombination.
+
+---
+
+# Nachtrag: v4 auf DAILY (statt 4H)
+
+Gleiche Configs, gleiche Engine, Daily-Bars (Pine-effMax-Regel: max. 3
+Base-Kerzen auf Daily; Valuation auf Daily gerechnet).
+
+| Config | n | PF | Avg R | Trades/Wo | IS PF | OOS PF | Ø Hold |
+|---|---|---|---|---|---|---|---|
+| BASE | 7'037 | **0.92** | −0.061 | 10.5 | 0.91 | 0.93 | 9 d |
+| + Valuation | 203 | 0.97 | −0.022 | 0.39 | 0.78 | 1.16 | 18 d |
+| Valuation + frisch | 161 | **1.00** | −0.001 | 0.31 | 0.76 | 1.26 | 18 d |
+| Valuation + Arrival | 9 | 1.23 | +0.154 | 0.02 | — | — | — |
+
+Vergleich 4H: BASE 0.84 · VAL 0.81 · VAL+frisch 0.86.
+
+## Befunde
+
+1. **Daily schlägt 4H in jeder Config** (BASE +0.08 PF bei n=7'037 und
+   stabilem IS/OOS 0.91/0.93). Das ist der grösste konsistente Einzeleffekt
+   der gesamten S/D-Forschung — Timeframe > alle Qualifier.
+2. Teil des Effekts ist mechanisch: Daily-Zonen sind höher, der fixe
+   Spread/Slippage-Anteil pro Trade sinkt relativ. Der Rest ist echtes
+   Signal-zu-Rausch-Verhältnis.
+3. **Valuation + frische Zonen auf Daily = exakt Breakeven (PF 1.00)** —
+   die erste S/D-Konfiguration der gesamten Forschung, die nach ehrlichen
+   Fills nicht verliert. OOS 1.26 (n≈70) ist ermutigend, IS 0.76 mahnt:
+   der Nutzen konzentriert sich auf das 2021+-Regime.
+4. Arrival auf Daily: n=9 — keine Aussage möglich.
+5. Frequenz der Breakeven-Config: ~1.3 Trades/Monat übers ganze
+   40er-Universum.
+
+## Konsequenz
+
+Wer diese Zonen-Familie handelt, sollte es auf DAILY tun, mit frischen
+Zonen und Valuation-Kontext — das ist der einzige Punkt des gesamten
+Suchraums, der die Nulllinie erreicht. Ein Edge ist auch das noch nicht.
