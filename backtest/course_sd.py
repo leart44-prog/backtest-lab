@@ -229,6 +229,7 @@ def run_course_sd(
     arrival_gate: bool = False,    # Bernd spec: clean impulsive approach to the zone
     daily_trend: "np.ndarray | None" = None,
     formations: tuple[int, ...] = (1, 2, 3, 4),
+    zone_scanner=None,
 ) -> list[dict]:
     meta = {m["name"]: m for m in load_manifest()}[name]
     cost = cost_for(name, meta.get("jpy", False), meta["type"], meta["category"],
@@ -243,7 +244,7 @@ def run_course_sd(
     n = len(df)
     score_v = score.to_numpy() if score is not None else None
 
-    all_zones = scan_zones(df)
+    all_zones = (zone_scanner or scan_zones)(df)
     zones_by_bar: dict[int, list[CZone]] = {}
     for z in all_zones:
         zones_by_bar.setdefault(z.created_i, []).append(z)
