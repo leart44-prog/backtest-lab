@@ -453,7 +453,8 @@ def run_course_sd(
             if violated:
                 trades.append({"instrument": name, "ts": idx[i], "side": "long" if z.is_demand else "short",
                                "fcode": z.fcode, "r": -1.0 - comm_r, "bars": 0, "reason": "SAME_BAR_SL",
-                               "klass": asset_class(name)})
+                               "klass": asset_class(name), "entry": float(entry),
+                               "sl": float(sl_level), "tp": float(tp), "entry_i": int(i)})
                 in_pos_until = i
                 z.mitigated = True
                 continue
@@ -476,7 +477,8 @@ def run_course_sd(
                 bars_held = last - i
             trades.append({"instrument": name, "ts": idx[i], "side": "long" if z.is_demand else "short",
                            "fcode": z.fcode, "r": float(r_out) - comm_r, "bars": bars_held, "reason": reason,
-                           "klass": asset_class(name)})
+                           "klass": asset_class(name), "entry": float(entry),
+                           "sl": float(sl_level), "tp": float(tp), "entry_i": int(i)})
             in_pos_until = i + max(bars_held, 1)
 
     return trades

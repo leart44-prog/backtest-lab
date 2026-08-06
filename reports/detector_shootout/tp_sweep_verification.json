@@ -1,0 +1,44 @@
+{
+  "BASE|TP1.0": {
+    "n": 9179,
+    "wr": 0.452,
+    "pf": 0.79,
+    "verified": 9179,
+    "mismatches": 515
+  },
+  "BASE|TP2.0": {
+    "n": 7560,
+    "wr": 0.319,
+    "pf": 0.91,
+    "verified": 7560,
+    "mismatches": 423
+  },
+  "BASE|TP2.5": {
+    "n": 6887,
+    "wr": 0.275,
+    "pf": 0.91,
+    "verified": 6887,
+    "mismatches": 378
+  },
+  "VAL_FRESH|TP1.0": {
+    "n": 148,
+    "wr": 0.466,
+    "pf": 0.83,
+    "verified": 148,
+    "mismatches": 9
+  },
+  "VAL_FRESH|TP2.0": {
+    "n": 147,
+    "wr": 0.333,
+    "pf": 0.95,
+    "verified": 147,
+    "mismatches": 9
+  },
+  "VAL_FRESH|TP2.5": {
+    "n": 146,
+    "wr": 0.308,
+    "pf": 1.05,
+    "verified": 146,
+    "mismatches": 10
+  }
+}
