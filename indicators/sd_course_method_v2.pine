@@ -43,6 +43,12 @@ requireCov    = input.bool(false, "Only show zones covered by HTF (big/small bro
 // [M2] Equilibrium hart ausschliessen
 eqHardBlock   = input.bool(true, "Equilibrium hart ausschliessen", group = gT, tooltip = "AN (Empfehlung, +0.04 R): im mittleren Drittel der HTF-Spanne keine Signale — auch nicht mit Trend-Tiebreak. AUS: v1-Verhalten (EQ mit Trendrichtung erlaubt).")
 
+gV = "Valuation (externen Indikator verbinden)"
+useVal        = input.bool(false, "Valuation-Gate aktiv", group = gV, tooltip = "Verbindet den separaten 'Valuation Score'-Indikator: beide auf denselben Chart legen, dann unten dessen Score-Plot als Quelle waehlen. Backtest: bester Einzel-Filter (PF 0.81 -> 0.87/0.88, OOS > IS). Demand nur bei undervalued, Supply nur bei overvalued.")
+valSrc        = input.source(close, "Valuation Score Quelle", group = gV, tooltip = "Hier den Plot 'Score' des Valuation-Score-Indikators auswaehlen (Dropdown zeigt Plots aller Indikatoren auf dem Chart). Solange hier 'close' steht, ist das Gate wirkungslos — deshalb Default-Schalter AUS.")
+valT1         = input.float(70, "Schwelle t1 (|Score| muss groesser sein)", minval = 10, step = 5, group = gV, tooltip = "Klassen-Presets aus dem Valuation-Indikator: FX-Crosses 60, FX-Majors 70, Indizes/Metalle/Rohstoffe 80. Hier manuell passend zum Chart-Symbol setzen.")
+valHard       = input.bool(true, "als hartes Kriterium (empfohlen)", group = gV, tooltip = "AN: falsche Valuation macht die Zone nicht handelbar (entspricht dem Backtest-Setup C2). AUS: Valuation zaehlt nur +2 im Score.")
+
 gP = "Trade plan (entry / stop / target)"
 showPlan      = input.bool(true, "Draw entry / stop / target for tradeable zones", group = gP)
 stopPct       = input.float(33.33, "Stop = % of zone beyond distal", minval = 1, maxval = 200, step = 0.01, group = gP)
@@ -358,26 +364,29 @@ if nAll > 0
             // [M1] Arrival
             arrOK = f_arrivalClean(z.isDemand, proxSel, hgt)
             arrSc = arrOK ? 2 : 0
+            // [M5] Valuation-Gate (Wert des letzten ABGESCHLOSSENEN Bars, wie im Backtest)
+            valAligned = not useVal or (z.isDemand ? valSrc[1] <= -valT1 : valSrc[1] >= valT1)
+            valSc = useVal and valAligned ? 2 : 0
             // [M4] Formations-Gewichtung (Backtest: DBD konsistent schlechteste,
             // Reversals DBR/RBD beste Formationen)
             formAdj = z.fcode == 4 ? -1 : (z.fcode == 2 or z.fcode == 3 ? 1 : 0)
             // [M3] Coverage nur noch mit covWeight (Default 0)
-            total = z.dep + z.baseSc + freshSc + pmSc + arrSc + formAdj + (z.covered ? covWeight : 0) + (z.flip ? 1 : 0)
-            tradeable = (not z.mitigated) and pmSc >= 1 and z.dep >= 1 and locOK and (not arrivalHard or arrOK) and (not requireCov or z.covered)
+            total = z.dep + z.baseSc + freshSc + pmSc + arrSc + valSc + formAdj + (z.covered ? covWeight : 0) + (z.flip ? 1 : 0)
+            tradeable = (not z.mitigated) and pmSc >= 1 and z.dep >= 1 and locOK and (not arrivalHard or arrOK) and (not useVal or not valHard or valAligned) and (not requireCov or z.covered)
             hideZone = total < minScoreShow or (requireCov and useHTF and not z.covered)
             transpNow = hideZone ? 100 : zoneTransp
             box.set_bgcolor(z.bx, color.new(z.isDemand ? colDemand : colSupply, transpNow))
             box.set_border_color(z.bx, hideZone ? color.new(color.gray, 100) : color.new(z.isDemand ? colDemand : colSupply, 0))
             if not na(z.lb)
-                tags = (z.covered ? "★" : "") + (z.flip ? "⚑" : "") + (arrOK ? "»" : "") + (tradeable ? " ✔" : "")
+                tags = (z.covered ? "★" : "") + (z.flip ? "⚑" : "") + (arrOK ? "»" : "") + (useVal and valAligned ? "$" : "") + (tradeable ? " ✔" : "")
                 label.set_text(z.lb, f_formStr(z.fcode) + " " + str.tostring(total) + tags)
                 label.set_textcolor(z.lb, tradeable ? color.white : color.new(color.white, 40))
                 formLong = z.fcode == 1 ? "Rally-Base-Rally (continuation demand)" : z.fcode == 2 ? "Drop-Base-Rally (reversal demand)" : z.fcode == 3 ? "Rally-Base-Drop (reversal supply)" : "Drop-Base-Drop (continuation supply)"
                 freshTxt = freshSc == 2 ? "untouched (fresh on the wider line)" : freshSc == 1 ? "wider line touched, preferred still clean" : "preferred line touched"
-                reason = (pmSc < 1 ? "profit margin < 3R; " : "") + ((band != "NA" and not locOK) ? "wrong location; " : "") + ((arrivalHard and not arrOK) ? "arrival nicht sauber; " : "") + ((requireCov and not z.covered) ? "no HTF coverage; " : "")
+                reason = (pmSc < 1 ? "profit margin < 3R; " : "") + ((band != "NA" and not locOK) ? "wrong location; " : "") + ((arrivalHard and not arrOK) ? "arrival nicht sauber; " : "") + ((useVal and valHard and not valAligned) ? "valuation passt nicht; " : "") + ((requireCov and not z.covered) ? "no HTF coverage; " : "")
                 statusTxt = z.mitigated ? "MITIGATED" : tradeable ? "TRADEABLE now — entry at proximal, stop " + str.tostring(stopPct, "#.#") + "% beyond distal, target " + str.tostring(targetR) + "R" : "not tradeable now: " + (reason == "" ? "waiting on location/price" : reason)
                 pmR = str.tostring(math.round(z.pm * 10) / 10)
-                label.set_tooltip(z.lb, f_formStr(z.fcode) + " " + (z.isDemand ? "demand" : "supply") + " — total score " + str.tostring(total) + "\n" + formLong + "\n\nSCORE BREAKDOWN (v2)\n• Departure: " + str.tostring(z.dep) + "/2\n• Base duration: " + str.tostring(z.baseSc) + "/2\n• Freshness: " + str.tostring(freshSc) + "/2 — " + freshTxt + "\n• Profit margin: " + str.tostring(pmSc) + "/2 (" + pmR + "R to peak)\n• Arrival (NEU, staerkster Qualifier): " + str.tostring(arrSc) + "/2\n• Formation (DBD −1, Reversal +1): " + (formAdj >= 0 ? "+" : "") + str.tostring(formAdj) + "\n• Coverage (Backtest-Gewicht 0): " + (z.covered ? "+" + str.tostring(covWeight) : "0") + "\n• Flip: " + (z.flip ? "+1" : "0") + "\n\nSYMBOLS\n★ HTF coverage (nur Anzeige)\n⚑ flip zone\n» arrival sauber\n✔ tradeable\n\nSTATUS\n" + statusTxt)
+                label.set_tooltip(z.lb, f_formStr(z.fcode) + " " + (z.isDemand ? "demand" : "supply") + " — total score " + str.tostring(total) + "\n" + formLong + "\n\nSCORE BREAKDOWN (v2)\n• Departure: " + str.tostring(z.dep) + "/2\n• Base duration: " + str.tostring(z.baseSc) + "/2\n• Freshness: " + str.tostring(freshSc) + "/2 — " + freshTxt + "\n• Profit margin: " + str.tostring(pmSc) + "/2 (" + pmR + "R to peak)\n• Arrival (NEU, staerkster Qualifier): " + str.tostring(arrSc) + "/2\n• Valuation (bester Filter im Backtest): " + (useVal ? str.tostring(valSc) + "/2 (Score " + str.tostring(math.round(valSrc[1])) + ")" : "aus")\n• Formation (DBD −1, Reversal +1): " + (formAdj >= 0 ? "+" : "") + str.tostring(formAdj) + "\n• Coverage (Backtest-Gewicht 0): " + (z.covered ? "+" + str.tostring(covWeight) : "0") + "\n• Flip: " + (z.flip ? "+1" : "0") + "\n\nSYMBOLS\n★ HTF coverage (nur Anzeige)\n⚑ flip zone\n» arrival sauber\n✔ tradeable\n\nSTATUS\n" + statusTxt)
                 if hideZone
                     label.set_text(z.lb, "")
                     label.set_color(z.lb, color.new(color.gray, 100))
@@ -412,7 +421,7 @@ if nAll > 0
 var table tb = na
 if showTable and barstate.islast
     if na(tb)
-        tb := table.new(position.top_right, 2, 4, border_width = 1)
+        tb := table.new(position.top_right, 2, 5, border_width = 1)
     trStr = trendCtx == 1 ? "UP" : trendCtx == -1 ? "DOWN" : "SIDEWAYS"
     trCol = trendCtx == 1 ? color.teal : trendCtx == -1 ? color.red : color.gray
     curBand = f_band(close)
@@ -425,6 +434,10 @@ if showTable and barstate.islast
     table.cell(tb, 1, 2, useHTF ? htfTF : "chart", text_color = color.white, bgcolor = color.new(color.black, 40))
     table.cell(tb, 0, 3, "Zones", text_color = color.white, bgcolor = color.new(color.black, 20))
     table.cell(tb, 1, 3, str.tostring(array.size(zones)), text_color = color.white, bgcolor = color.new(color.black, 40))
+    valTxt = not useVal ? "aus" : str.tostring(math.round(valSrc[1])) + (valSrc[1] <= -valT1 ? " UNDERVALUED" : valSrc[1] >= valT1 ? " OVERVALUED" : " neutral")
+    valCol = not useVal ? color.gray : valSrc[1] <= -valT1 ? color.teal : valSrc[1] >= valT1 ? color.red : color.gray
+    table.cell(tb, 0, 4, "Valuation", text_color = color.white, bgcolor = color.new(color.black, 20))
+    table.cell(tb, 1, 4, valTxt, text_color = color.white, bgcolor = color.new(valCol, 30))
 
 // ------------------------------------------------------------- ALERTS --------
 alertcondition(formed and barstate.isconfirmed and isDem, "New demand zone", "A new demand zone (RBR/DBR) formed")
