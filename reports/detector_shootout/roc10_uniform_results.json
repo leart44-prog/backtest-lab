@@ -1,0 +1,38 @@
+{
+  "default_10_15|VAL": {
+    "n": 193,
+    "pf": 1.0,
+    "avg_r": -0.001,
+    "is_pf": 0.84,
+    "oos_pf": 1.18,
+    "indices_n": 22,
+    "indices_pf": 0.73
+  },
+  "default_10_15|VAL_FRESH": {
+    "n": 146,
+    "pf": 1.05,
+    "avg_r": 0.038,
+    "is_pf": 0.82,
+    "oos_pf": 1.35,
+    "indices_n": 18,
+    "indices_pf": 0.95
+  },
+  "uniform_10|VAL": {
+    "n": 187,
+    "pf": 0.99,
+    "avg_r": -0.007,
+    "is_pf": 0.82,
+    "oos_pf": 1.19,
+    "indices_n": 16,
+    "indices_pf": 0.57
+  },
+  "uniform_10|VAL_FRESH": {
+    "n": 142,
+    "pf": 1.03,
+    "avg_r": 0.018,
+    "is_pf": 0.77,
+    "oos_pf": 1.35,
+    "indices_n": 14,
+    "indices_pf": 0.67
+  }
+}
