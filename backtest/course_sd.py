@@ -178,7 +178,8 @@ def scan_zones(df: pd.DataFrame, avg_len: int = 10, size_factor: float = 1.5,
 # ─────────────────────────────────────────────────────────────────────
 def valuation_score(name: str, df: pd.DataFrame, fut: dict[str, pd.Series],
                     class_baskets: dict[str, pd.Series],
-                    z_len: int = 100, z_smooth: int = 3, z_mult: float = 30.0
+                    z_len: int = 100, z_smooth: int = 3, z_mult: float = 30.0,
+                    roc_override: "int | None" = None,
                     ) -> tuple[pd.Series, float]:
     """Returns (score series aligned to df.index, t1 threshold)."""
     klass = asset_class(name)
@@ -199,6 +200,8 @@ def valuation_score(name: str, df: pd.DataFrame, fut: dict[str, pd.Series],
         t1 = 80.0
         roc_len = 15 if klass == "indices" else 10
 
+    if roc_override is not None:
+        roc_len = roc_override
     roc = ratio / ratio.shift(roc_len) - 1.0
     mu = roc.rolling(z_len).mean()
     sig = roc.rolling(z_len).std(ddof=0)   # Pine ta.stdev = population std
