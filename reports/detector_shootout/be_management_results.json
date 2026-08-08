@@ -1,0 +1,56 @@
+{
+  "VAL|BE1R_TP1.5R": {
+    "n": 196,
+    "wr": 0.245,
+    "pf": 0.63,
+    "avg_r": -0.205,
+    "is_pf": 0.54,
+    "oos_pf": 0.73,
+    "be_exits": 41
+  },
+  "VAL|fix_TP1.5R": {
+    "n": 196,
+    "wr": 0.393,
+    "pf": 0.93,
+    "avg_r": -0.045,
+    "is_pf": 0.76,
+    "oos_pf": 1.13,
+    "be_exits": 0
+  },
+  "VAL|fix_TP2.5R": {
+    "n": 193,
+    "wr": 0.295,
+    "pf": 1.0,
+    "avg_r": -0.001,
+    "is_pf": 0.84,
+    "oos_pf": 1.18,
+    "be_exits": 0
+  },
+  "VAL_FRESH|BE1R_TP1.5R": {
+    "n": 148,
+    "wr": 0.27,
+    "pf": 0.71,
+    "avg_r": -0.158,
+    "is_pf": 0.63,
+    "oos_pf": 0.82,
+    "be_exits": 29
+  },
+  "VAL_FRESH|fix_TP1.5R": {
+    "n": 148,
+    "wr": 0.399,
+    "pf": 0.95,
+    "avg_r": -0.033,
+    "is_pf": 0.74,
+    "oos_pf": 1.22,
+    "be_exits": 0
+  },
+  "VAL_FRESH|fix_TP2.5R": {
+    "n": 146,
+    "wr": 0.308,
+    "pf": 1.05,
+    "avg_r": 0.038,
+    "is_pf": 0.82,
+    "oos_pf": 1.35,
+    "be_exits": 0
+  }
+}

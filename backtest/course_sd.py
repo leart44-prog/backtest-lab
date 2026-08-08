@@ -235,6 +235,7 @@ def run_course_sd(
     formations: tuple[int, ...] = (1, 2, 3, 4),
     zone_scanner=None,
     frictionless: bool = False,    # diagnostic: zero spread/slippage/commission
+    be_at_r: "float | None" = None,   # move stop to entry once +be_at_r reached
 ) -> list[dict]:
     meta = {m["name"]: m for m in load_manifest()}[name]
     cost = cost_for(name, meta.get("jpy", False), meta["type"], meta["category"],
@@ -463,15 +464,29 @@ def run_course_sd(
                 z.mitigated = True
                 continue
 
-            # simulate forward: stop-before-target
+            # simulate forward: stop-before-target (+ optional BE move with
+            # conservative same-bar recheck of the freshly moved stop)
             r_out, bars_held, reason = None, 0, "EOS"
+            cur_stop = sl_level
+            be_armed = False
+            be_lvl = (entry + be_at_r * risk if z.is_demand else entry - be_at_r * risk) if be_at_r else None
             for j in range(i + 1, min(n, i + 400)):
                 bars_held = j - i
-                hit_sl = (l[j] <= sl_level) if z.is_demand else (h[j] >= sl_level)
-                hit_tp = (h[j] >= tp) if z.is_demand else (l[j] <= tp)
+                hit_sl = (l[j] <= cur_stop) if z.is_demand else (h[j] >= cur_stop)
                 if hit_sl:
-                    r_out, reason = -1.0, "SL"
+                    r_out = -1.0 if not be_armed else ((cur_stop - entry) / risk if z.is_demand else (entry - cur_stop) / risk)
+                    reason = "SL" if not be_armed else "BE_STOP"
                     break
+                if be_lvl is not None and not be_armed:
+                    reached = (h[j] >= be_lvl) if z.is_demand else (l[j] <= be_lvl)
+                    if reached:
+                        cur_stop = entry
+                        be_armed = True
+                        back = (l[j] <= cur_stop) if z.is_demand else (h[j] >= cur_stop)
+                        if back:
+                            r_out, reason = 0.0, "BE_SAME_BAR"
+                            break
+                hit_tp = (h[j] >= tp) if z.is_demand else (l[j] <= tp)
                 if hit_tp:
                     r_out, reason = target_r, "TP"
                     break
