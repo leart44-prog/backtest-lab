@@ -75,6 +75,17 @@ SKIP_BARS = 2
 MAX_ZONES = 200
 STOP_PCT = 0.3333    # 33.33% of zone height beyond distal
 
+# feature presets: USER_CFG = the user's chart settings (default everywhere);
+# MENTOR_CFG = the OTC study-replication preset (spec §8.8 + "V3 reading"
+# for every extension flag: no gaps, no leg-in wick, no pivot integration,
+# no 2-candle leg-out, no speed bump, overlap keep-all, skip 0)
+USER_CFG = {"use_gaps": True, "use_liwick": True, "use_pivot": True,
+            "leg_out_2c": True, "speed_bump": True, "overlap_skip": True,
+            "skip_bars": 2}
+MENTOR_CFG = {"use_gaps": False, "use_liwick": False, "use_pivot": False,
+              "leg_out_2c": False, "speed_bump": False, "overlap_skip": False,
+              "skip_bars": 0}
+
 
 @dataclass
 class OZone:
@@ -104,7 +115,7 @@ def _piv_integrate(z: OZone, piv: float) -> None:
         z.distal = piv
 
 
-def _detect_at(o, h, l, c, i: int, s: int):
+def _detect_at(o, h, l, c, i: int, s: int, cfg: dict = USER_CFG):
     """V3 chain for leg-out offset s (1 = single candle i, 2 = candles
     i-1..i combined). Returns a zone-candidate dict or None. Mirrors
     f_detectAt(); overlap handling happens in the caller."""
@@ -185,37 +196,38 @@ def _detect_at(o, h, l, c, i: int, s: int):
     # leg-in wick extension (reversals, explosive leg-in only) — after checks
     li_expl = _bp(o, h, l, c, li) > LEG_OUT_BP
     distal_x = distal
-    if reversal and li_expl:
+    if cfg["use_liwick"] and reversal and li_expl:
         distal_x = min(distal, l[li]) if is_dem else max(distal, h[li])
 
     # gap integration (departure gap, then leg-in gap) — after checks
     prox_wx, prox_px = prox_w, prox_p
     gap = False
-    if is_dem and lo_l > b_high:                 # leg-out gapped up past the base
-        gap = True
-        prox_wx = min(lo_o, lo_c)
-        prox_px = lo_l
-    if (not is_dem) and lo_h < b_low:            # leg-out gapped down past the base
-        gap = True
-        prox_wx = max(lo_o, lo_c)
-        prox_px = lo_h
-    li_h, li_l = h[li], l[li]
-    li_body_hi = max(o[li], c[li])
-    li_body_lo = min(o[li], c[li])
-    if li_l > b_high:                            # leg-in entirely above the base
-        gap = True
-        if is_dem:
-            prox_wx = max(prox_wx, li_body_lo)
-            prox_px = max(prox_px, li_l)
-        else:
-            distal_x = max(distal_x, li_l)
-    if li_h < b_low:                             # leg-in entirely below the base
-        gap = True
-        if is_dem:
-            distal_x = min(distal_x, li_h)
-        else:
-            prox_wx = min(prox_wx, li_body_hi)
-            prox_px = min(prox_px, li_h)
+    if cfg["use_gaps"]:
+        if is_dem and lo_l > b_high:             # leg-out gapped up past the base
+            gap = True
+            prox_wx = min(lo_o, lo_c)
+            prox_px = lo_l
+        if (not is_dem) and lo_h < b_low:        # leg-out gapped down past the base
+            gap = True
+            prox_wx = max(lo_o, lo_c)
+            prox_px = lo_h
+        li_h, li_l = h[li], l[li]
+        li_body_hi = max(o[li], c[li])
+        li_body_lo = min(o[li], c[li])
+        if li_l > b_high:                        # leg-in entirely above the base
+            gap = True
+            if is_dem:
+                prox_wx = max(prox_wx, li_body_lo)
+                prox_px = max(prox_px, li_l)
+            else:
+                distal_x = max(distal_x, li_l)
+        if li_h < b_low:                         # leg-in entirely below the base
+            gap = True
+            if is_dem:
+                distal_x = min(distal_x, li_h)
+            else:
+                prox_wx = min(prox_wx, li_body_hi)
+                prox_px = min(prox_px, li_h)
 
     over = (lo_h - b_high) if is_dem else (b_low - lo_l)
     if not (lo_r > 0 and over / lo_r * 100.0 >= STICK_PCT):
@@ -223,7 +235,7 @@ def _detect_at(o, h, l, c, i: int, s: int):
     if not (zh <= MAX_ZONE_X * lo_r):
         return None
     # speed bump: 1-candle base, same-colour explosive leg-in (continuation pause)
-    if b_len == 1 and leg_in_bull == bull and li_expl:
+    if cfg["speed_bump"] and b_len == 1 and leg_in_bull == bull and li_expl:
         return None
 
     return {"is_demand": is_dem, "fcode": fcode, "prox_w": prox_wx,
@@ -232,31 +244,36 @@ def _detect_at(o, h, l, c, i: int, s: int):
 
 
 def _create(zones: list[OZone], d: dict, i: int,
-            piv_h: list[float], piv_l: list[float]) -> OZone | None:
+            piv_h: list[float], piv_l: list[float],
+            cfg: dict = USER_CFG) -> OZone | None:
     """Overlap mode 'Skip if overlapping active': drop the candidate if it
     overlaps an ACTIVE same-side zone. Then pivInit against the 3 stored
     pivots of the zone's kind (newest first) — may extend the distal."""
-    lo = min(d["prox_w"], d["distal"])
-    hi = max(d["prox_w"], d["distal"])
-    for zz in zones:
-        if zz.is_demand == d["is_demand"] and not zz.mitigated:
-            zlo = min(zz.prox_w, zz.distal)
-            zhi = max(zz.prox_w, zz.distal)
-            if hi >= zlo and zhi >= lo:
-                return None
+    if cfg["overlap_skip"]:
+        lo = min(d["prox_w"], d["distal"])
+        hi = max(d["prox_w"], d["distal"])
+        for zz in zones:
+            if zz.is_demand == d["is_demand"] and not zz.mitigated:
+                zlo = min(zz.prox_w, zz.distal)
+                zhi = max(zz.prox_w, zz.distal)
+                if hi >= zlo and zhi >= lo:
+                    return None
     z = OZone(d["is_demand"], d["fcode"], d["prox_w"], d["prox_p"],
               d["distal"], i, d["avg_r"], d["gap"])
-    for piv in (piv_l if z.is_demand else piv_h):
-        _piv_integrate(z, piv)
+    if cfg["use_pivot"]:
+        for piv in (piv_l if z.is_demand else piv_h):
+            _piv_integrate(z, piv)
     zones.append(z)
     while len(zones) > MAX_ZONES:
         zones.pop(0)
     return z
 
 
-def collect_fills(df: pd.DataFrame) -> list[dict]:
+def collect_fills(df: pd.DataFrame, cfg: dict = USER_CFG,
+                  counts: dict | None = None) -> list[dict]:
     """Run the full per-bar state machine; return the first-test fill
-    events: {i, is_demand, fcode, prox_p, distal (frozen at fill), gap}."""
+    events: {i, is_demand, fcode, prox_p, distal (frozen at fill), gap}.
+    Pass a dict as `counts` to receive {"zones": <zones created>}."""
     o = df["open"].to_numpy()
     h = df["high"].to_numpy()
     l = df["low"].to_numpy()
@@ -267,11 +284,12 @@ def collect_fills(df: pd.DataFrame) -> list[dict]:
     piv_l: list[float] = []
     fills: list[dict] = []
     zone_on_prev = False
+    zones_created = 0
 
     for i in range(n):
         # 1. pivot confirm at offset PIV_LEN (strict newer side, ties on older)
         new_ph, new_pl = None, None
-        if i >= 2 * PIV_LEN:
+        if cfg["use_pivot"] and i >= 2 * PIV_LEN:
             p = i - PIV_LEN
             hp, lp = h[p], l[p]
             if hp > h[p + 1:i + 1].max() and hp >= h[i - 2 * PIV_LEN:p].max():
@@ -293,18 +311,20 @@ def collect_fills(df: pd.DataFrame) -> list[dict]:
 
         # 2. detection: chain 1, then optional 2-candle leg-out
         created = None
-        d = _detect_at(o, h, l, c, i, 1)
+        d = _detect_at(o, h, l, c, i, 1, cfg)
         if d is not None:
-            created = _create(zones, d, i, piv_h, piv_l)
-        if created is None and not zone_on_prev and i >= 1:
+            created = _create(zones, d, i, piv_h, piv_l, cfg)
+        if created is None and cfg["leg_out_2c"] and not zone_on_prev and i >= 1:
             bull0, bull1 = c[i] > o[i], c[i - 1] > o[i - 1]
             bear0, bear1 = c[i] < o[i], c[i - 1] < o[i - 1]
             if ((bull0 and bull1) or (bear0 and bear1)) \
                     and _bp(o, h, l, c, i) > LEG_IN_BP and _bp(o, h, l, c, i - 1) > LEG_IN_BP:
-                d = _detect_at(o, h, l, c, i, 2)
+                d = _detect_at(o, h, l, c, i, 2, cfg)
                 if d is not None:
-                    created = _create(zones, d, i, piv_h, piv_l)
+                    created = _create(zones, d, i, piv_h, piv_l, cfg)
         zone_on_prev = created is not None
+        if created is not None:
+            zones_created += 1
 
         # 3. zone update: tests/fill -> mitigation -> arming
         for z in zones:
@@ -324,7 +344,9 @@ def collect_fills(df: pd.DataFrame) -> list[dict]:
             if idx_since >= 1:
                 if (c[i] < z.distal) if z.is_demand else (c[i] > z.distal):
                     z.mitigated = True
-            z.armed_prev = idx_since >= SKIP_BARS
+            z.armed_prev = idx_since >= cfg["skip_bars"]
+    if counts is not None:
+        counts["zones"] = zones_created
     return fills
 
 
