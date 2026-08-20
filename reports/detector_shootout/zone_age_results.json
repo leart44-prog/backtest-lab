@@ -1,0 +1,90 @@
+{
+  "VAL_FRESH|age500": {
+    "all": {
+      "n": 146,
+      "wr": 0.308,
+      "pf": 1.05,
+      "avg_r": 0.038
+    },
+    "trades_per_week": 0.28,
+    "IS": {
+      "n": 75,
+      "wr": 0.253,
+      "pf": 0.82,
+      "avg_r": -0.139
+    },
+    "OOS": {
+      "n": 71,
+      "wr": 0.366,
+      "pf": 1.35,
+      "avg_r": 0.226
+    },
+    "median_zone_age_at_fill": null
+  },
+  "VAL_FRESH|age100": {
+    "all": {
+      "n": 112,
+      "wr": 0.33,
+      "pf": 1.17,
+      "avg_r": 0.114
+    },
+    "trades_per_week": 0.22,
+    "IS": {
+      "n": 56,
+      "wr": 0.268,
+      "pf": 0.89,
+      "avg_r": -0.081
+    },
+    "OOS": {
+      "n": 56,
+      "wr": 0.393,
+      "pf": 1.5,
+      "avg_r": 0.31
+    },
+    "median_zone_age_at_fill": null
+  },
+  "REVERSALS|age500": {
+    "all": {
+      "n": 87,
+      "wr": 0.356,
+      "pf": 1.29,
+      "avg_r": 0.194
+    },
+    "trades_per_week": 0.17,
+    "IS": {
+      "n": 49,
+      "wr": 0.327,
+      "pf": 1.17,
+      "avg_r": 0.114
+    },
+    "OOS": {
+      "n": 38,
+      "wr": 0.395,
+      "pf": 1.48,
+      "avg_r": 0.296
+    },
+    "median_zone_age_at_fill": null
+  },
+  "REVERSALS|age100": {
+    "all": {
+      "n": 73,
+      "wr": 0.37,
+      "pf": 1.38,
+      "avg_r": 0.243
+    },
+    "trades_per_week": 0.15,
+    "IS": {
+      "n": 39,
+      "wr": 0.333,
+      "pf": 1.22,
+      "avg_r": 0.15
+    },
+    "OOS": {
+      "n": 34,
+      "wr": 0.412,
+      "pf": 1.58,
+      "avg_r": 0.348
+    },
+    "median_zone_age_at_fill": null
+  }
+}
