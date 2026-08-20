@@ -236,6 +236,10 @@ def run_course_sd(
     zone_scanner=None,
     frictionless: bool = False,    # diagnostic: zero spread/slippage/commission
     be_at_r: "float | None" = None,   # move stop to entry once +be_at_r reached
+    entry_depth: float = 0.0,      # limit placed this fraction of zone height
+                                   # INSIDE the zone (0 = at the preferred
+                                   # proximal). Fills only when the tradeable
+                                   # touch penetrates at least this deep.
 ) -> list[dict]:
     meta = {m["name"]: m for m in load_manifest()}[name]
     cost = cost_for(name, meta.get("jpy", False), meta["type"], meta["category"],
@@ -434,7 +438,9 @@ def run_course_sd(
                 if headroom is not None and headroom < 2.0 * risk_est:
                     tradeable = False
 
-            take = tradeable and i > in_pos_until
+            # deep limit: the tradeable touch must penetrate at least
+            # entry_depth of the zone height, else the order stays unfilled
+            take = tradeable and i > in_pos_until and pen >= entry_depth
 
             # record the touch AFTER deciding (entry happens on this touch)
             z.touches += 1
@@ -445,7 +451,9 @@ def run_course_sd(
             if not take:
                 continue
 
-            entry = z.prox_p + (friction if z.is_demand else -friction)
+            lvl = (z.prox_p - entry_depth * height) if z.is_demand else \
+                  (z.prox_p + entry_depth * height)
+            entry = lvl + (friction if z.is_demand else -friction)
             risk = abs(entry - sl_level)
             if risk <= 0:
                 continue
