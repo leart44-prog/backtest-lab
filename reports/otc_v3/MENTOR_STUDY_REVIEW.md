@@ -83,6 +83,29 @@ und trägt sie fast vollständig.
   Same-Bar-Anteil weiter.
 - DXY fehlt uns; 7 von 8 Dollar-Paaren abgedeckt.
 
+## Unabhängige 1H-Validierung (Dukascopy)
+
+`backtest/validate_1h_dukascopy.py`: komplette Wiederholung auf einer
+unabhängigen Datenquelle (Dukascopy BID-1H, 21 Crosses, 2016–2026,
+gleiche Bereinigung), Protokoll auf den Dukascopy-Tageskerzen, dann
+Auflösung jedes Trades auf Stundenbasis (Band: Berührungs-Stunde
+konservativ = nur SL zählt / optimistisch = TP zählt):
+
+| Ziel | Mentor-Ledger (Daily) | 1H konservativ | 1H optimistisch | Breakeven |
+|---|---|---|---|---|
+| 1:1 | 65.0 % (n=2'580) | **51.2 %** | **54.6 %** | 50.0 % |
+| 1:2 | 39.4 % (n=2'578) | **33.6 %** | **34.2 %** | 33.3 % |
+
+- Daily-Ledger repliziert quellenunabhängig (64.2 % eigene Daten,
+  65.0 % Dukascopy) — die Konvention, nicht die Daten, erzeugt die Zahl.
+- Das 4H-Band (49.7–57.6 %) verengt sich auf 1H auf **51.2–54.6 %** —
+  brutto ~1–5 Punkte über Breakeven bei 1:1, bei 1:2 praktisch exakt
+  Breakeven (33.6–34.2 % vs. 33.3 % nötig). Die Kosten (~0.07R/Trade auf
+  Crosses) fressen das vollständig.
+- Von den Daily-„Same-bar-Gewinnern" sind auf 1H-Reihenfolge **32 %
+  (1:1) bzw. 44 % (1:2) in Wahrheit Verlierer** — konsistent mit der
+  4H-Prüfung (34 %).
+
 ## Fazit
 
 Die Studien zeigen real existierende, replizierbare RELATIVE Effekte

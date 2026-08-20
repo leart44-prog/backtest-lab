@@ -1,0 +1,44 @@
+{
+  "1:1": {
+    "pairs": 21,
+    "daily_ledger": {
+      "n": 2580,
+      "wr": 0.65
+    },
+    "h1_conservative": {
+      "n": 2579,
+      "wr": 0.512
+    },
+    "h1_optimistic": {
+      "n": 2579,
+      "wr": 0.546
+    },
+    "breakeven_needs": 0.5,
+    "daily_samebar_wins_on_1h": {
+      "win": 811,
+      "loss": 384,
+      "unresolved": 1
+    }
+  },
+  "1:2": {
+    "pairs": 21,
+    "daily_ledger": {
+      "n": 2578,
+      "wr": 0.394
+    },
+    "h1_conservative": {
+      "n": 2578,
+      "wr": 0.336
+    },
+    "h1_optimistic": {
+      "n": 2578,
+      "wr": 0.342
+    },
+    "breakeven_needs": 0.333,
+    "daily_samebar_wins_on_1h": {
+      "win": 204,
+      "loss": 163,
+      "unresolved": 0
+    }
+  }
+}
