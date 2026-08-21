@@ -1,0 +1,314 @@
+[
+  {
+    "phase": "Hold tief 1.00-1.25%",
+    "kind": "hold_low",
+    "from": "2003-01-01",
+    "to": "2004-06-30",
+    "fx_pairs": 27,
+    "fx_eff_mean": 0.04,
+    "fx_net_mean_pct": 7.6,
+    "fx_vol_mean_pct": 10.1,
+    "spx": {
+      "net_pct": 25.0,
+      "eff": 0.081,
+      "vol": 15.3,
+      "maxdd_pct": -14.1
+    },
+    "cfg100": {
+      "n": 3,
+      "avg_r": 0.157,
+      "pf": 1.23
+    },
+    "cfg500": {
+      "n": 3,
+      "avg_r": 0.157,
+      "pf": 1.23
+    }
+  },
+  {
+    "phase": "Anhebung 1.00->5.25%",
+    "kind": "hiking",
+    "from": "2004-06-30",
+    "to": "2006-06-29",
+    "fx_pairs": 28,
+    "fx_eff_mean": 0.041,
+    "fx_net_mean_pct": 8.5,
+    "fx_vol_mean_pct": 8.2,
+    "spx": {
+      "net_pct": 9.2,
+      "eff": 0.034,
+      "vol": 10.5,
+      "maxdd_pct": -7.7
+    },
+    "cfg100": {
+      "n": 5,
+      "avg_r": -0.315,
+      "pf": 0.61
+    },
+    "cfg500": {
+      "n": 5,
+      "avg_r": -0.32,
+      "pf": 0.61
+    }
+  },
+  {
+    "phase": "Hold hoch 5.25%",
+    "kind": "hold_high",
+    "from": "2006-06-29",
+    "to": "2007-09-18",
+    "fx_pairs": 28,
+    "fx_eff_mean": 0.055,
+    "fx_net_mean_pct": 6.8,
+    "fx_vol_mean_pct": 8.9,
+    "spx": {
+      "net_pct": 16.0,
+      "eff": 0.089,
+      "vol": 12.4,
+      "maxdd_pct": -9.4
+    },
+    "cfg100": {
+      "n": 10,
+      "avg_r": -0.659,
+      "pf": 0.27
+    },
+    "cfg500": {
+      "n": 15,
+      "avg_r": -0.315,
+      "pf": 0.61
+    }
+  },
+  {
+    "phase": "Senkung 5.25->0.25% (GFC)",
+    "kind": "cutting",
+    "from": "2007-09-18",
+    "to": "2008-12-16",
+    "fx_pairs": 28,
+    "fx_eff_mean": 0.082,
+    "fx_net_mean_pct": 19.0,
+    "fx_vol_mean_pct": 17.9,
+    "spx": {
+      "net_pct": 42.8,
+      "eff": 0.115,
+      "vol": 37.4,
+      "maxdd_pct": -51.9
+    },
+    "cfg100": {
+      "n": 19,
+      "avg_r": -0.455,
+      "pf": 0.46
+    },
+    "cfg500": {
+      "n": 21,
+      "avg_r": -0.178,
+      "pf": 0.77
+    }
+  },
+  {
+    "phase": "ZIRP + QE 0-0.25%",
+    "kind": "hold_low",
+    "from": "2008-12-16",
+    "to": "2015-12-16",
+    "fx_pairs": 28,
+    "fx_eff_mean": 0.023,
+    "fx_net_mean_pct": 20.8,
+    "fx_vol_mean_pct": 11.9,
+    "spx": {
+      "net_pct": 123.8,
+      "eff": 0.058,
+      "vol": 17.9,
+      "maxdd_pct": -27.6
+    },
+    "cfg100": {
+      "n": 36,
+      "avg_r": 0.373,
+      "pf": 1.63
+    },
+    "cfg500": {
+      "n": 37,
+      "avg_r": 0.555,
+      "pf": 2.01
+    }
+  },
+  {
+    "phase": "Anhebung 0.25->2.50%",
+    "kind": "hiking",
+    "from": "2015-12-16",
+    "to": "2018-12-19",
+    "fx_pairs": 28,
+    "fx_eff_mean": 0.021,
+    "fx_net_mean_pct": 7.2,
+    "fx_vol_mean_pct": 9.2,
+    "spx": {
+      "net_pct": 22.5,
+      "eff": 0.05,
+      "vol": 12.3,
+      "maxdd_pct": -13.4
+    },
+    "cfg100": {
+      "n": 8,
+      "avg_r": 0.288,
+      "pf": 1.45
+    },
+    "cfg500": {
+      "n": 10,
+      "avg_r": 0.379,
+      "pf": 1.62
+    }
+  },
+  {
+    "phase": "Hold 2.25-2.50%",
+    "kind": "hold_high",
+    "from": "2018-12-19",
+    "to": "2019-07-31",
+    "fx_pairs": 27,
+    "fx_eff_mean": 0.06,
+    "fx_net_mean_pct": 3.1,
+    "fx_vol_mean_pct": 7.0,
+    "spx": {
+      "net_pct": 20.2,
+      "eff": 0.191,
+      "vol": 14.3,
+      "maxdd_pct": -6.8
+    },
+    "cfg100": {
+      "n": 6,
+      "avg_r": -1.034,
+      "pf": 0.0
+    },
+    "cfg500": {
+      "n": 7,
+      "avg_r": -1.031,
+      "pf": 0.0
+    }
+  },
+  {
+    "phase": "Senkung + Covid-Schock",
+    "kind": "cutting",
+    "from": "2019-07-31",
+    "to": "2020-03-15",
+    "fx_pairs": 28,
+    "fx_eff_mean": 0.092,
+    "fx_net_mean_pct": 5.4,
+    "fx_vol_mean_pct": 8.2,
+    "spx": {
+      "net_pct": 9.1,
+      "eff": 0.064,
+      "vol": 27.6,
+      "maxdd_pct": -28.0
+    },
+    "cfg100": {
+      "n": 9,
+      "avg_r": 0.47,
+      "pf": 1.83
+    },
+    "cfg500": {
+      "n": 10,
+      "avg_r": 0.319,
+      "pf": 1.52
+    }
+  },
+  {
+    "phase": "ZIRP + QE (Covid)",
+    "kind": "hold_low",
+    "from": "2020-03-15",
+    "to": "2022-03-16",
+    "fx_pairs": 28,
+    "fx_eff_mean": 0.054,
+    "fx_net_mean_pct": 10.2,
+    "fx_vol_mean_pct": 8.0,
+    "spx": {
+      "net_pct": 74.0,
+      "eff": 0.122,
+      "vol": 19.9,
+      "maxdd_pct": -13.0
+    },
+    "cfg100": {
+      "n": 18,
+      "avg_r": 0.736,
+      "pf": 2.45
+    },
+    "cfg500": {
+      "n": 20,
+      "avg_r": 0.555,
+      "pf": 1.99
+    }
+  },
+  {
+    "phase": "Anhebung 0.25->5.50%",
+    "kind": "hiking",
+    "from": "2022-03-16",
+    "to": "2023-07-26",
+    "fx_pairs": 28,
+    "fx_eff_mean": 0.052,
+    "fx_net_mean_pct": 8.6,
+    "fx_vol_mean_pct": 9.8,
+    "spx": {
+      "net_pct": 11.9,
+      "eff": 0.053,
+      "vol": 24.0,
+      "maxdd_pct": -22.5
+    },
+    "cfg100": {
+      "n": 6,
+      "avg_r": 0.735,
+      "pf": 2.46
+    },
+    "cfg500": {
+      "n": 5,
+      "avg_r": 1.084,
+      "pf": 3.69
+    }
+  },
+  {
+    "phase": "Hold hoch 5.25-5.50%",
+    "kind": "hold_high",
+    "from": "2023-07-26",
+    "to": "2024-09-18",
+    "fx_pairs": 28,
+    "fx_eff_mean": 0.019,
+    "fx_net_mean_pct": 1.7,
+    "fx_vol_mean_pct": 6.9,
+    "spx": {
+      "net_pct": 18.1,
+      "eff": 0.151,
+      "vol": 12.5,
+      "maxdd_pct": -8.6
+    },
+    "cfg100": {
+      "n": 4,
+      "avg_r": -1.037,
+      "pf": 0.0
+    },
+    "cfg500": {
+      "n": 7,
+      "avg_r": -1.035,
+      "pf": 0.0
+    }
+  },
+  {
+    "phase": "Senkungszyklus ab Sep 24",
+    "kind": "cutting",
+    "from": "2024-09-18",
+    "to": "2026-02-27",
+    "fx_pairs": 28,
+    "fx_eff_mean": 0.055,
+    "fx_net_mean_pct": 6.4,
+    "fx_vol_mean_pct": 7.9,
+    "spx": {
+      "net_pct": 21.1,
+      "eff": 0.085,
+      "vol": 17.8,
+      "maxdd_pct": -19.8
+    },
+    "cfg100": {
+      "n": 8,
+      "avg_r": 0.146,
+      "pf": 1.23
+    },
+    "cfg500": {
+      "n": 9,
+      "avg_r": 0.011,
+      "pf": 1.02
+    }
+  }
+]
