@@ -40,3 +40,31 @@ Differential-Effekt ist reversal-spezifisch — oder Rauschen bei kleinem n.
    Differential unerklaert).
 4. Vorsicht: Buckets mit n=33-76; Effektrichtungen konsistent, aber
    keine Praezision. Rekonstruierte Zinshistorie monatsgenau.
+
+## Nachtrag: Differential als RICHTUNGS-Filter (User-Idee)
+
+Idee des Users: nur die Seite handeln, die das Differential stuetzt
+(Bsp.: CHF-Zins ueber EUR -> nur EURCHF-Shorts an Supply-Zonen).
+Deklariert: A = Richtung Hochzins-Waehrung (Niveau-Vorzeichen),
+B = Richtung der 12M-Differentialbewegung. REVERSALS age500, Dukascopy.
+
+| Filter | Zelle | n | OER | PF | UNGESEHEN (<2013) | 2013+ |
+|---|---|---|---|---|---|---|
+| A Niveau | KONFORM (mit Hochzins) | 90 | -0.04 | 0.94 | 0.78 (41) | 1.10 (49) |
+| A Niveau | **DAGEGEN (gegen Hochzins)** | **56** | **+0.42** | **1.69** | **1.62 (20)** | **1.72 (36)** |
+| B Bewegung | konform (mit Bewegung) | 75 | +0.21 | 1.32 | 1.15 (34) | 1.48 (41) |
+| B Bewegung | dagegen | 37 | +0.01 | 1.01 | 0.94 (18) | 1.07 (19) |
+| Kombi (gegen Niveau, mit Bewegung) | | 26 | +0.33 | 1.52 | 1.21 (9) | 1.71 (17) |
+
+Befund: Die Idee wirkt — aber INVERTIERT. Zonen-Reversals GEGEN die
+Hochzins-Waehrung sind die erste Zelle der gesamten Session, die in
+BEIDEN Aeren haelt (1.62 / 1.72). Mechanik plausibel: das System ist
+Mean-Reversion; die Carry-Seite ist die gedehnte Seite; an frischen
+Zonen mit Valuation-Extrem schnappt der Preis gegen sie zurueck.
+Im User-Beispiel heisst das umgekehrt zur Intuition: CHF hochverzinst
+-> eher EURCHF-LONGS an Demand-Zonen.
+
+Vorsicht: n=56 ueber 23 Jahre (~2.4 Trades/Jahr auf 28 Paaren); die
+Zelle ist eine von ~8 getesteten (Inversions-Auswahl nachtraeglich);
+Zinshistorie monatsgenau rekonstruiert. Stabilitaet ueber beide Aeren
+ist das staerkste Argument — Frequenz und Selektionsrisiko bleiben.
