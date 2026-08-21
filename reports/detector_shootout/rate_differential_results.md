@@ -68,3 +68,31 @@ Vorsicht: n=56 ueber 23 Jahre (~2.4 Trades/Jahr auf 28 Paaren); die
 Zelle ist eine von ~8 getesteten (Inversions-Auswahl nachtraeglich);
 Zinshistorie monatsgenau rekonstruiert. Stabilitaet ueber beide Aeren
 ist das staerkste Argument — Frequenz und Selektionsrisiko bleiben.
+
+## Nachtrag 2: TP-Sweep auf der Gegen-Carry-Zelle (deklariert 1R-6R)
+
+Gleiche Fills, ehrliche Aufloesung, Kosten; n=55-57.
+
+| TP | WR | AvgR | PF | UNGESEHEN avgR/PF | 2013+ avgR/PF |
+|---|---|---|---|---|---|
+| 1:1 | 45.6% | -0.11 | 0.80 | -0.16/0.72 | -0.08/0.85 |
+| 1:1.5 | 40.4% | -0.01 | 0.98 | -0.07/0.89 | +0.02/1.03 |
+| 1:2 | 40.4% | +0.19 | 1.31 | +0.12/1.20 | +0.23/1.38 |
+| 1:2.5 | 41.1% | +0.42 | 1.69 | +0.38/1.62 | +0.43/1.72 |
+| 1:3 | 39.3% | +0.55 | 1.88 | +0.58/1.95 | +0.53/1.85 |
+| **1:4** | **34.5%** | **+0.66** | **1.98** | +0.73/2.10 | +0.61/1.91 |
+| 1:5 | 27.3% | +0.55 | 1.73 | +0.78/2.09 | +0.41/1.54 |
+| 1:6 | 21.8% | +0.42 | 1.52 | +0.73/1.95 | +0.24/1.29 |
+
+Befund: Expectancy steigt monoton von 1:1 (negativ!) bis zum Maximum
+bei 1:4, Plateau 1:3-1:5, Rollover danach. Aera-konsistent bis 1:4
+(ab 1:5 divergieren die Haelften). Die Winrate faellt von 46% auf nur
+35% bei 1:4 — die Gegen-Carry-Rueckschnapper laufen weit, deshalb
+zahlt das Tail. Enge Ziele (1:1, 1:1.5) sind selbst auf dieser besten
+Zelle negativ — fuenfte Replikation des Befunds "fruehe Gewinnsicherung
+zerstoert den Erwartungswert".
+
+Vorsicht: n=55; der Unterschied 2.5R vs 4R (+0.24R) liegt innerhalb des
+Standardfehlers (~0.27R) — belastbar ist die Monotonie 1:1->1:3, nicht
+der exakte Peak. Median-Haltedauer der TP-Treffer: 4R ~ Wochen,
+6R ~ 41 Tage.
